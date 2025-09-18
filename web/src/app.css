@@ -1,0 +1,18 @@
+:root {
+	--black: #0e0e0e;
+	--darkest: #463f3a;
+	--dark: #8a817c;
+	--light: #bcb8b1;
+	--lightest: #f4f3ee;
+	--accent: #e0afa0;
+}
+
+* {
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+}
+
+body {
+	font-family: 'Inter', sans-serif;
+}
