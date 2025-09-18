@@ -76,7 +76,7 @@ func main() {
 }
 
 func CreateShare(c *gin.Context) {
-	var body shares.Share
+	var body shares.CreateShareRequest
 	if err := c.ShouldBind(&body); err != nil {
 		c.Error(err)
 		return
@@ -99,3 +99,8 @@ func GetShare(c *gin.Context) {
 	}
 	c.IndentedJSON(http.StatusOK, response)
 }
+
+// TODO: implement simple share saving
+// TODO: implement share expiry (deletes after some time, or becomes unavailable)
+// TODO: implement share protection
+// TODO: implement QR code linking

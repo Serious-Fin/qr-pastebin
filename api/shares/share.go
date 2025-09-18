@@ -10,6 +10,7 @@ import (
 )
 
 type Share struct {
+	Id 		 string `json:"id,omitempty"`
 	Content  string `json:"content"`
 	Title    string `json:"title,omitempty"`
 	ExpireAt string `json:"expireAt,omitempty"`
@@ -21,6 +22,13 @@ type DBShare struct {
 	Title    sql.NullString
 	ExpireAt sql.NullString
 	Password sql.NullString
+}
+
+type CreateShareRequest struct {
+	Content  string `json:"content"`
+	Title    string `json:"title,omitempty"`
+	ExpireIn string `json:"expireIn,omitempty"`
+	Password string `json:"password,omitempty"`
 }
 
 type CreateShareResponse struct {
@@ -35,9 +43,9 @@ func NewShareHandler(db *pgx.Conn) *ShareDBHandler {
 	return &ShareDBHandler{DB: db}
 }
 
-func (handler *ShareDBHandler) CreateShare(request Share) (*CreateShareResponse, error) {
+func (handler *ShareDBHandler) CreateShare(request CreateShareRequest) (*CreateShareResponse, error) {
 	id := uuid.NewString()
-	_, err := handler.DB.Exec(context.Background(), "INSERT INTO shares (id, title, content, password, expireat) VALUES ($1, $2, $3, $4, $5);", id, request.Title, request.Content, request.Password, request.ExpireAt)
+	_, err := handler.DB.Exec(context.Background(), "INSERT INTO shares (id, title, content, password, expireat) VALUES ($1, $2, $3, $4, $5);", id, request.Title, request.Content, request.Password, request.ExpireIn)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't create new share: %w", err)
 	}
@@ -51,11 +59,24 @@ func (handler *ShareDBHandler) GetShare(id string) (*Share, error) {
 		return nil, fmt.Errorf("couldn't find share with id '%s': %w", id, err)
 	}
 
-	share := GetShareFromDBObject(dbShare)
+	share := convertShareFromDB(dbShare)
 	return &share, nil
 }
 
-func GetShareFromDBObject(dbShare DBShare) Share {
+func createNewShare(request CreateShareRequest) Share {
+	var share Share
+	share.Id = uuid.NewString()
+	share.Content = request.Content
+	share.Title = request.Title
+	// TODO: hash the password
+	share.Password = share.Password
+	// TODO: calculate NOW + expireIn
+	share.ExpireAt = request.ExpireIn
+
+	return share
+}
+
+func convertShareFromDB(dbShare DBShare) Share {
 	var share Share
 	share.Content = dbShare.Content
 	if dbShare.Title.Valid {
