@@ -9,8 +9,8 @@
 		</label>
 
 		<label>
-			Expiration:
-			<input type="date" class="property-input" name="expiration" />
+			Expire in:
+			<input type="text" class="property-input" name="expireIn" />
 		</label>
 
 		<label>

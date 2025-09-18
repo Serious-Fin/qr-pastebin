@@ -2,7 +2,7 @@ export interface Share {
 	content: string;
 	title?: string;
 	password?: string;
-	expiration?: string;
+	expireIn?: string;
 }
 
 interface CreateShareResponse {

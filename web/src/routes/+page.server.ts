@@ -7,7 +7,7 @@ export const actions = {
 		const params: Share = {
 			title: data.get('title') as string,
 			content: data.get('content') as string,
-			expiration: data.get('expiration') as string,
+			expireIn: data.get('expireIn') as string,
 			password: data.get('password') as string
 		};
 		try {
