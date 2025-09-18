@@ -9,6 +9,6 @@ CREATE TABLE public.shares (
 	title varchar NULL,
 	"content" varchar NULL,
 	"password" varchar NULL,
-	expire_at date NULL,
+	expire_at timestamptz NULL,
 	CONSTRAINT shares_pk PRIMARY KEY (id)
 );

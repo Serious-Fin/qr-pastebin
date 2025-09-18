@@ -100,7 +100,12 @@ func GetShare(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, response)
 }
 
-// TODO: implement simple share saving
+// TODO: hook up share creation via frontend
+// TODO: create share display page (with QR)
 // TODO: implement share expiry (deletes after some time, or becomes unavailable)
-// TODO: implement share protection
-// TODO: implement QR code linking
+// TODO: implement share protection (can't read without password)
+// TODO: create logging in
+// TODO: if logged in, can see created shares
+// TODO: create share editing page
+// TODO: host via docker
+// TODO: setup HTTPS
