@@ -1,7 +1,7 @@
 <section id="main">
 	<h1>Quick Share</h1>
 	<h2>New share</h2>
-	<form action="POST" method="POST">
+	<form method="POST" action="?/createShare">
 		<textarea id="content" name="content" required></textarea>
 		<label>
 			Title:
@@ -10,7 +10,17 @@
 
 		<label>
 			Expire in:
-			<input type="text" class="property-input" name="expireIn" />
+			<select class="property-input" name="expireIn">
+				<option value="" selected>Never</option>
+				<option value="10_minutes">10 minutes</option>
+				<option value="1_hours">1 hour</option>
+				<option value="1_days">1 day</option>
+				<option value="1_weeks">1 week</option>
+				<option value="2_weeks">2 weeks</option>
+				<option value="1_months">1 month</option>
+				<option value="6_months">6 months</option>
+				<option value="1_years">1 year</option>
+			</select>
 		</label>
 
 		<label>

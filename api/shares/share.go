@@ -148,9 +148,13 @@ func createExpirationDate(expireIn string) (time.Time, error) {
 	case "hours":
 		duration = time.Hour * time.Duration(durationCount)
 	case "days":
-		duration = time.Hour * 24 * time.Duration(durationCount)
+		return time.Now().AddDate(0, 0, durationCount), nil
 	case "weeks":
-		duration = time.Hour * 24 * 7 * time.Duration(durationCount)
+		return time.Now().AddDate(0, 0, durationCount * 7), nil
+	case "months":
+		return time.Now().AddDate(0, durationCount, 0), nil
+	case "years":
+		return time.Now().AddDate(durationCount, 0, 0), nil
 	default:
 		return time.Now(), fmt.Errorf("unknown duration type '%s'", parts[1])
 	}
