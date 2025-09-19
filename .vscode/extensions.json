@@ -2,6 +2,7 @@
     "recommendations": [
         "dbaeumer.vscode-eslint",
         "rvest.vs-code-prettier-eslint",
-        "svelte.svelte-vscode"
+        "svelte.svelte-vscode",
+        "golang.go"
     ]
 }

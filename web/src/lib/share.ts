@@ -13,6 +13,7 @@ export interface Share {
 	id: string;
 	content: string;
 	title?: string;
+	expireAt?: Date;
 }
 
 export async function createShare(request: CreateShareRequest): Promise<string> {
@@ -40,7 +41,7 @@ export async function createShare(request: CreateShareRequest): Promise<string> 
 	}
 }
 
-export async function getShare(id: string): Promise<string> {
+export async function getShare(id: string): Promise<Share> {
 	try {
 		const response = await fetch(`http://localhost:8080/share/${id}`);
 		if (!response.ok) {
@@ -49,8 +50,7 @@ export async function getShare(id: string): Promise<string> {
 				`Error getting share ${response.status} - ${errorBody.message || 'Unknown error'}`
 			);
 		}
-		const parsedResponse: Share = await response.json();
-		return parsedResponse.id;
+		return await response.json();
 	} catch (err) {
 		if (err instanceof Error) {
 			throw Error(`Could not call get share endpoint: ${JSON.stringify(err.message)}`);

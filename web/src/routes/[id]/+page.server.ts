@@ -3,6 +3,6 @@ import { getShare } from '$lib/share';
 
 export const load: PageServerLoad = async ({ params }) => {
 	return {
-		share: getShare(params.id)
+		share: await getShare(params.id)
 	};
 };
