@@ -221,6 +221,9 @@ func createGetShareResponse(share Share) GetShareResponse {
 		shareResp.ExpiresIn = createExpireInTextFromDate(share.ExpireAt)
 	}
 	// TODO: add author to db table as optional FK id
+	// TODO: create user table (name, email, hashed password)
+	// TODO: add one test user
+
 	return shareResp
 }
 

@@ -100,7 +100,7 @@ func GetShare(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, response)
 }
 
-
+// make share creation page more appealing to mobile
 // TODO: implement share expiry (deletes after some time, or becomes unavailable)
 // TODO: implement share protection (can't read without password)
 // TODO: create logging in
