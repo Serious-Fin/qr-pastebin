@@ -14,7 +14,7 @@
 			type: 'svg',
 			errorCorrectionLevel: 'L',
 			margin: 2,
-			width: 300
+			width: 200
 		});
 	});
 </script>
@@ -31,7 +31,7 @@
 		{/if}
 
 		{#if share.expiresIn}
-			<p>Expires in {share.expiresIn}</p>
+			<p>{share.expiresIn}</p>
 		{:else}
 			<p>Does not expire</p>
 		{/if}
@@ -84,7 +84,7 @@
 
 	#share-info {
 		width: 100%;
-		margin-bottom: 20px;
+		margin-bottom: 40px;
 		box-sizing: border-box;
 		padding-left: 10px;
 
@@ -93,7 +93,7 @@
 	}
 
 	.qr {
-		width: 100%;
+		width: 60%;
 		height: fit-content;
 		display: flex;
 		justify-content: center;

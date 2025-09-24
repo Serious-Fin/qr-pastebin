@@ -1,5 +1,4 @@
 {
-  "editor.defaultFormatter": "rvest.vs-code-prettier-eslint",
   "[html]": {
     "editor.defaultFormatter": "rvest.vs-code-prettier-eslint"
   },
