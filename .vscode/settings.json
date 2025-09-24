@@ -1,6 +1,9 @@
 {
-  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.defaultFormatter": "rvest.vs-code-prettier-eslint",
   "[html]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
-  }
+    "editor.defaultFormatter": "rvest.vs-code-prettier-eslint"
+  },
+  "[svelte]": {
+     "editor.defaultFormatter": "svelte.svelte-vscode"
+   },
 }

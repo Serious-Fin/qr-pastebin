@@ -1,5 +1,5 @@
 <section id="main">
-	<h1>Quick Share</h1>
+	<h1>Shareit</h1>
 	<h2>New share</h2>
 	<form method="POST" action="?/createShare">
 		<textarea id="content" name="content" required></textarea>

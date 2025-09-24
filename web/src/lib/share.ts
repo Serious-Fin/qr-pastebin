@@ -13,7 +13,9 @@ export interface Share {
 	id: string;
 	content: string;
 	title?: string;
-	expireAt?: Date;
+	expiresIn?: string;
+	isPasswordProtected?: boolean;
+	author?: string
 }
 
 export async function createShare(request: CreateShareRequest): Promise<string> {

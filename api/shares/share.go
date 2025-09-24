@@ -4,11 +4,11 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"math/rand"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -75,7 +75,7 @@ func (handler *ShareDBHandler) GetShare(id string) (*Share, error) {
 
 func createNewShare(request CreateShareRequest) (*Share, error) {
 	var share Share
-	share.Id = uuid.NewString()
+	share.Id = createRandomId(7)
 	share.Content = request.Content
 	share.Title = request.Title
 	if request.Password != "" {
@@ -94,6 +94,16 @@ func createNewShare(request CreateShareRequest) (*Share, error) {
 	}
 
 	return &share, nil
+}
+
+var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ123456789_")
+
+func createRandomId(length int) string {
+    b := make([]rune, length)
+    for i := range b {
+        b[i] = letters[rand.Intn(len(letters))]
+    }
+    return string(b)
 }
 
 func createInsertStatement(share Share) (string, []any) {
