@@ -72,6 +72,8 @@ func main() {
 	router.Use(ErrorHandlerMiddleware())
 	router.POST("/share", CreateShare)
 	router.GET("/share/:id", GetShare)
+	router.POST("/share/:id/protected", GetProtectedShare)
+	router.GET("/share/:id/protected", IsPasswordProtected)
 	router.Run("0.0.0.0:8080")
 }
 
@@ -100,7 +102,32 @@ func GetShare(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, response)
 }
 
-// make share creation page more appealing to mobile
+func IsPasswordProtected(c *gin.Context) {
+	shareId := c.Param("id")
+	response, err := shareHandler.GetShare(shareId)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+	c.IndentedJSON(http.StatusOK, response)
+}
+
+func GetProtectedShare(c *gin.Context) {
+	shareId := c.Param("id")
+	var body shares.GetProtectedShareRequest
+	if err := c.ShouldBind(&body); err != nil {
+		c.Error(err)
+		return
+	}
+
+	response, err := shareHandler.GetProtectedShare(shareId, body.Password)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+	c.IndentedJSON(http.StatusOK, response)
+}
+
 // TODO: implement share expiry (deletes after some time, or becomes unavailable)
 // TODO: implement share protection (can't read without password)
 // TODO: create logging in

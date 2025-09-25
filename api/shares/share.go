@@ -3,6 +3,7 @@ package shares
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"math/rand"
 	"strconv"
@@ -30,6 +31,10 @@ type GetShareResponse struct {
 	Author              string `json:"author,omitempty"`
 }
 
+type IsPasswordProtectedResponse struct {
+	IsPasswordProtected bool `json:"isPasswordProtected"`
+}
+
 type DBShare struct {
 	Id       string
 	Content  string
@@ -47,6 +52,10 @@ type CreateShareRequest struct {
 
 type CreateShareResponse struct {
 	ShareId string `json:"id"`
+}
+
+type GetProtectedShareRequest struct {
+	Password string `json:"password"`
 }
 
 type ShareDBHandler struct {
@@ -72,15 +81,61 @@ func (handler *ShareDBHandler) CreateShare(request CreateShareRequest) (*CreateS
 }
 
 func (handler *ShareDBHandler) GetShare(id string) (*GetShareResponse, error) {
+	share, err := handler.readShareFromDB(id)
+	if err != nil {
+		return nil, err
+	}
+	shareResponse := createGetShareResponse(share)
+	return &shareResponse, nil
+}
+
+func (handler *ShareDBHandler) GetProtectedShare(id string, password string) (*GetShareResponse, error) {
+	share, err := handler.readShareFromDB(id)
+	if err != nil {
+		return nil, err
+	}
+
+	fmt.Printf("Got password: %s", password)
+
+	passwordOk, err := isPasswordCorrect(&share, password)
+	if err != nil {
+		return nil, err
+	}
+	if !passwordOk {
+		return nil, errors.New("password is incorrect")
+	}
+
+	shareResponse := createGetShareResponse(share)
+	return &shareResponse, nil
+}
+
+func (handler *ShareDBHandler) IsPasswordProtected(id string) (*IsPasswordProtectedResponse, error) {
+	share, err := handler.readShareFromDB(id)
+	if err != nil {
+		return nil, err
+	}
+	if share.Password == "" {
+		return &IsPasswordProtectedResponse{IsPasswordProtected: false}, nil
+	} else {
+		return &IsPasswordProtectedResponse{IsPasswordProtected: true}, nil
+	}
+}
+
+func isPasswordCorrect(share *Share, password string) (bool, error) {
+	err := bcrypt.CompareHashAndPassword([]byte(share.Password), []byte(password))
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+func (handler *ShareDBHandler) readShareFromDB(id string) (Share, error) {
 	var dbShare DBShare
 	err := handler.DB.QueryRow(context.Background(), "SELECT id, title, content, expire_at, password FROM shares WHERE id = $1;", id).Scan(&dbShare.Id, &dbShare.Title, &dbShare.Content, &dbShare.ExpireAt, &dbShare.Password)
 	if err != nil {
-		return nil, fmt.Errorf("couldn't find share with id '%s': %w", id, err)
+		return Share{}, fmt.Errorf("couldn't find share with id '%s': %w", id, err)
 	}
-
-	share := convertShareFromDB(dbShare)
-	shareResponse := createGetShareResponse(share)
-	return &shareResponse, nil
+	return convertShareFromDB(dbShare), nil
 }
 
 func createNewShare(request CreateShareRequest) (*Share, error) {

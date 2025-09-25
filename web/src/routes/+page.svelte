@@ -3,14 +3,13 @@
 	<h2>New share</h2>
 	<form method="POST" action="?/createShare">
 		<textarea id="content" name="content" required></textarea>
-		<label>
-			Title:
-			<input type="text" class="property-input" name="title" />
-		</label>
 
-		<label>
-			Expire in:
-			<select class="property-input" name="expireIn">
+		<div id="grid">
+			<label for="title">Title:</label>
+			<input type="text" class="property-input" name="title" id="title" />
+
+			<label for="expireIn">Expire in:</label>
+			<select class="property-input" name="expireIn" id="expireIn">
 				<option value="" selected>Never</option>
 				<option value="10_minutes">10 minutes</option>
 				<option value="1_hours">1 hour</option>
@@ -21,14 +20,12 @@
 				<option value="6_months">6 months</option>
 				<option value="1_years">1 year</option>
 			</select>
-		</label>
 
-		<label>
-			Password:
-			<input type="password" class="property-input" name="password" />
-		</label>
+			<label for="password">Password:</label>
+			<input type="password" class="property-input" name="password" id="password" />
+		</div>
 
-		<input type="submit" value="Share it" />
+		<input type="submit" value="Create" />
 	</form>
 </section>
 
@@ -53,7 +50,7 @@
 	}
 
 	h2 {
-		font-size: 16pt;
+		font-size: 15pt;
 		font-weight: 500;
 	}
 
@@ -61,14 +58,41 @@
 		display: flex;
 		flex-direction: column;
 		align-items: center;
+		width: 100%;
 	}
 
 	#content {
-		width: 80vw;
+		width: 100%;
 		max-width: 90vw;
-		min-height: 100px;
+		min-height: 150px;
 		margin: 15px 0;
 		padding: 7px 8px;
 		border-radius: 10px;
+	}
+
+	#grid {
+		display: grid;
+		grid-template-columns: 100px auto;
+		row-gap: 10px;
+	}
+
+	input,
+	select {
+		padding: 3px 5px;
+	}
+
+	input[type='submit'] {
+		padding: 10px 20px;
+		background-color: var(--accent);
+		border: none;
+		box-shadow: 2px 2px 2px 2px rgba(0, 0, 0, 0.199);
+		border-radius: 10px;
+		margin-top: 20px;
+		font-size: 12pt;
+	}
+
+	input[type='submit']:active {
+		box-shadow: 1px 1px 1px 1px rgba(0, 0, 0, 0.199);
+		transform: translateY(2px);
 	}
 </style>

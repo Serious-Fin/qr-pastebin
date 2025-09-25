@@ -3,11 +3,23 @@
 	import QRCode from 'qrcode';
 	import { onMount } from 'svelte';
 	import { page } from '$app/state';
+	import { FetchShareStatus, type Share } from '$lib/share';
+	import ShareNotFound from '$lib/componenets/ShareNotFound.svelte';
+	import SharePasswordProtected from '$lib/componenets/SharePasswordProtected.svelte';
 
 	let { data }: PageProps = $props();
-	const share = data.share;
+	let share = $state(data.share);
+	let status = $state(data.status);
 
 	let svg: string = $state('');
+
+	const updateShare = (newShare: Share, newStatus: FetchShareStatus) => {
+		share = newShare;
+		status = newStatus;
+		console.log('updated:');
+		console.log(share);
+		console.log(status);
+	};
 
 	onMount(async () => {
 		svg = await QRCode.toString(page.url.href, {
@@ -21,29 +33,35 @@
 
 <section id="main">
 	<h1>Shareit</h1>
-	{#if share.title !== undefined && share.title !== ''}
-		<h2>{share.title}</h2>
+	{#if status === FetchShareStatus.Accessible && share}
+		{#if share.title !== undefined && share.title !== ''}
+			<h2>{share.title}</h2>
+		{/if}
+		<textarea id="content" name="content" readonly>{share.content}</textarea>
+		<div id="share-info">
+			{#if share.author}
+				<p>Created by: {share.author}</p>
+			{/if}
+
+			{#if share.expiresIn}
+				<p>{share.expiresIn}</p>
+			{:else}
+				<p>Does not expire</p>
+			{/if}
+
+			{#if share.isPasswordProtected}
+				<p>Is password protected</p>
+			{:else}
+				<p>Not password protected</p>
+			{/if}
+		</div>
+
+		<div class="qr">{@html svg}</div>
+	{:else if status === FetchShareStatus.NotFound}
+		<ShareNotFound />
+	{:else if status === FetchShareStatus.NeedPassword}
+		<SharePasswordProtected {updateShare} />
 	{/if}
-	<textarea id="content" name="content" readonly>{share.content}</textarea>
-	<div id="share-info">
-		{#if share.author}
-			<p>Created by: {share.author}</p>
-		{/if}
-
-		{#if share.expiresIn}
-			<p>{share.expiresIn}</p>
-		{:else}
-			<p>Does not expire</p>
-		{/if}
-
-		{#if share.isPasswordProtected}
-			<p>Is password protected</p>
-		{:else}
-			<p>Not password protected</p>
-		{/if}
-	</div>
-
-	<div class="qr">{@html svg}</div>
 </section>
 
 <style>
@@ -68,8 +86,8 @@
 	}
 
 	p {
-		color: rgb(56, 56, 56);
-		font-size: 11pt;
+		color: rgb(83, 83, 83);
+		font-size: 10pt;
 	}
 
 	#content {
@@ -80,6 +98,7 @@
 		margin: 15px 0;
 		padding: 7px 8px;
 		border-radius: 5px;
+		font-size: 12pt;
 	}
 
 	#share-info {
