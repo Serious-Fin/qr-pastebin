@@ -7,13 +7,16 @@
 	let { updateShare }: { updateShare: (share: Share, status: FetchShareStatus) => void } = $props();
 
 	let isLoading = $state(false);
+	let err = $state('');
 
 	const showShare: SubmitFunction = () => {
 		isLoading = true;
 		return async ({ update, result }) => {
 			try {
 				await update();
-				if (result.type === 'success' && result.data?.share) {
+				if (result.type === 'success' && result.data?.errMsg) {
+					err = result.data.errMsg;
+				} else if (result.type === 'success' && result.data?.share) {
 					const share = result.data.share;
 					const status = FetchShareStatus.Accessible;
 					updateShare(share, status);
@@ -44,6 +47,10 @@
 	</label>
 	<input type="submit" value="Access" />
 </form>
+
+{#if err}
+	<p id="err">{err}</p>
+{/if}
 
 <style>
 	h2 {
@@ -76,5 +83,10 @@
 	input[type='submit']:active {
 		box-shadow: 1px 1px 1px 1px rgba(0, 0, 0, 0.199);
 		transform: translateY(2px);
+	}
+
+	#err {
+		color: red;
+		margin-top: 30px;
 	}
 </style>

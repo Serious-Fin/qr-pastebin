@@ -116,12 +116,9 @@ func (handler *ShareDBHandler) GetProtectedShare(id string, password string) (*G
 		return nil, errors.New("trying to access expired share")
 	}
 
-	passwordOk, err := isPasswordCorrect(&share, password)
-	if err != nil {
-		return nil, err
-	}
+	passwordOk := isPasswordCorrect(&share, password)
 	if !passwordOk {
-		return nil, errors.New("password is incorrect")
+		return nil, &PasswordIncorrectError{}
 	}
 
 	shareResponse, err := handler.createGetShareResponse(share)
@@ -143,12 +140,12 @@ func (handler *ShareDBHandler) IsPasswordProtected(id string) (*IsPasswordProtec
 	}
 }
 
-func isPasswordCorrect(share *Share, password string) (bool, error) {
+func isPasswordCorrect(share *Share, password string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(share.Password), []byte(password))
 	if err != nil {
-		return false, err
+		return false
 	}
-	return true, nil
+	return true
 }
 
 func (handler *ShareDBHandler) readShareFromDB(id string) (Share, error) {

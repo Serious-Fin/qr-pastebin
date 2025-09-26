@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 	"net/http"
@@ -30,6 +29,8 @@ func sendError(c *gin.Context, statusCode int, message string, err error) {
 	c.IndentedJSON(statusCode, apiError)
 }
 
+var wrongPasswordErr *shares.PasswordIncorrectError
+
 func ErrorHandlerMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Next()
@@ -40,9 +41,9 @@ func ErrorHandlerMiddleware() gin.HandlerFunc {
 			statusCode := http.StatusInternalServerError
 			message := "An unexpected server error encountered"
 
-			if errors.Is(err, sql.ErrNoRows) {
-				statusCode = http.StatusNotFound
-				message = "Resource not found"
+			if errors.As(err, &wrongPasswordErr) {
+				statusCode = http.StatusUnauthorized
+				message = "Wrong password"
 			}
 
 			sendError(c, statusCode, message, err)
@@ -133,4 +134,3 @@ func GetProtectedShare(c *gin.Context) {
 // TODO: create share editing page
 // TODO: host via docker
 // TODO: setup HTTPS
-// TODO: add fuent error handling for password display (show error msg instead of error on incorrect pass)

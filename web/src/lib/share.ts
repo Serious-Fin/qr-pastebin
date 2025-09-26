@@ -28,6 +28,14 @@ export enum FetchShareStatus {
 	Accessible
 }
 
+export class WrongPasswordError extends Error {
+    constructor() {
+        super("Wrong password, try again");
+        this.name = "WrongPasswordError";
+        Object.setPrototypeOf(this, WrongPasswordError.prototype);
+    }
+}
+
 export async function createShare(request: CreateShareRequest): Promise<string> {
 	try {
 		const response = await fetch(`http://localhost:8080/share`, {
@@ -99,6 +107,9 @@ export async function getPasswordProtectedShare(id: string, body: GetPasswordPro
 			},
 			method: 'POST'
 		});
+		if (response.status === 401) {
+			throw new WrongPasswordError()
+		}
 		if (!response.ok) {
 			const errorBody = await response.json().catch(() => ({ message: response.statusText }));
 			throw new Error(
@@ -107,6 +118,9 @@ export async function getPasswordProtectedShare(id: string, body: GetPasswordPro
 		}
 		return await response.json();
 	} catch (err) {
+		if (err instanceof WrongPasswordError) {
+			throw err
+		}
 		if (err instanceof Error) {
 			throw Error(`Could not call get share endpoint: ${JSON.stringify(err.message)}`);
 		}

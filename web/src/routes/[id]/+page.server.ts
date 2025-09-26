@@ -1,5 +1,5 @@
 import type { PageServerLoad } from './$types';
-import { getShare, isSharePasswordProtected, FetchShareStatus, type Share, type GetPasswordProtectedShareRequest, getPasswordProtectedShare } from '$lib/share';
+import { getShare, isSharePasswordProtected, FetchShareStatus, type Share, type GetPasswordProtectedShareRequest, getPasswordProtectedShare, WrongPasswordError } from '$lib/share';
 import { fail } from '@sveltejs/kit';
 
 export const load: PageServerLoad = async ({ params }) => {
@@ -45,6 +45,9 @@ export const actions = {
 		try {
 			share = await getPasswordProtectedShare(id, params);
 		} catch (err) {
+			if (err instanceof WrongPasswordError) {
+				return {errMsg: err.message}
+			}
 			return fail(500, {
 				message: err instanceof Error ? err.message : 'Unknown error'
 			});
