@@ -128,7 +128,6 @@ func GetProtectedShare(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, response)
 }
 
-// TODO: implement share expiry (deletes after some time, or becomes unavailable)
 // TODO: create logging in
 // TODO: if logged in, can see created shares
 // TODO: create share editing page
