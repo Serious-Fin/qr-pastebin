@@ -20,6 +20,13 @@ type Share struct {
 	Title    string    `json:"title,omitempty"`
 	ExpireAt time.Time `json:"expireAt,omitempty"`
 	Password string    `json:"password,omitempty"`
+	AuthorId int       `json:"author,omitempty"`
+}
+
+type User struct {
+	Id       int    `json:"id"`
+	Name     string `json:"name"`
+	Password string `json:"password"`
 }
 
 type GetShareResponse struct {
@@ -41,6 +48,7 @@ type DBShare struct {
 	Title    sql.NullString
 	ExpireAt sql.NullTime
 	Password sql.NullString
+	AuthorId sql.NullInt32
 }
 
 type CreateShareRequest struct {
@@ -48,6 +56,7 @@ type CreateShareRequest struct {
 	Title    string `json:"title,omitempty"`
 	ExpireIn string `json:"expireIn,omitempty"`
 	Password string `json:"password,omitempty"`
+	Author   string `json:"author,omitempty"`
 }
 
 type CreateShareResponse struct {
@@ -85,8 +94,11 @@ func (handler *ShareDBHandler) GetShare(id string) (*GetShareResponse, error) {
 	if err != nil {
 		return nil, err
 	}
-	shareResponse := createGetShareResponse(share)
-	return &shareResponse, nil
+	shareResponse, err := handler.createGetShareResponse(share)
+	if err != nil {
+		return nil, err
+	}
+	return shareResponse, nil
 }
 
 func (handler *ShareDBHandler) GetProtectedShare(id string, password string) (*GetShareResponse, error) {
@@ -94,8 +106,6 @@ func (handler *ShareDBHandler) GetProtectedShare(id string, password string) (*G
 	if err != nil {
 		return nil, err
 	}
-
-	fmt.Printf("Got password: %s", password)
 
 	passwordOk, err := isPasswordCorrect(&share, password)
 	if err != nil {
@@ -105,8 +115,11 @@ func (handler *ShareDBHandler) GetProtectedShare(id string, password string) (*G
 		return nil, errors.New("password is incorrect")
 	}
 
-	shareResponse := createGetShareResponse(share)
-	return &shareResponse, nil
+	shareResponse, err := handler.createGetShareResponse(share)
+	if err != nil {
+		return nil, err
+	}
+	return shareResponse, nil
 }
 
 func (handler *ShareDBHandler) IsPasswordProtected(id string) (*IsPasswordProtectedResponse, error) {
@@ -131,11 +144,20 @@ func isPasswordCorrect(share *Share, password string) (bool, error) {
 
 func (handler *ShareDBHandler) readShareFromDB(id string) (Share, error) {
 	var dbShare DBShare
-	err := handler.DB.QueryRow(context.Background(), "SELECT id, title, content, expire_at, password FROM shares WHERE id = $1;", id).Scan(&dbShare.Id, &dbShare.Title, &dbShare.Content, &dbShare.ExpireAt, &dbShare.Password)
+	err := handler.DB.QueryRow(context.Background(), "SELECT id, title, content, expire_at, password, author FROM shares WHERE id = $1;", id).Scan(&dbShare.Id, &dbShare.Title, &dbShare.Content, &dbShare.ExpireAt, &dbShare.Password, &dbShare.AuthorId)
 	if err != nil {
-		return Share{}, fmt.Errorf("couldn't find share with id '%s': %w", id, err)
+		return Share{}, fmt.Errorf("error getting share with id '%s': %w", id, err)
 	}
 	return convertShareFromDB(dbShare), nil
+}
+
+func (handler *ShareDBHandler) readUserFromDB(id int) (User, error) {
+	var user User
+	err := handler.DB.QueryRow(context.Background(), "SELECT id, name, password FROM users WHERE id = $1;", id).Scan(&user.Id, &user.Name, &user.Password)
+	if err != nil {
+		return User{}, fmt.Errorf("error getting user with id '%d': %w", id, err)
+	}
+	return user, nil
 }
 
 func createNewShare(request CreateShareRequest) (*Share, error) {
@@ -258,10 +280,16 @@ func convertShareFromDB(dbShare DBShare) Share {
 	} else {
 		share.Password = ""
 	}
+
+	if dbShare.AuthorId.Valid {
+		share.AuthorId = int(dbShare.AuthorId.Int32)
+	} else {
+		share.AuthorId = -1
+	}
 	return share
 }
 
-func createGetShareResponse(share Share) GetShareResponse {
+func (handler *ShareDBHandler) createGetShareResponse(share Share) (*GetShareResponse, error) {
 	var shareResp GetShareResponse
 	shareResp.Id = share.Id
 	shareResp.Content = share.Content
@@ -275,11 +303,14 @@ func createGetShareResponse(share Share) GetShareResponse {
 	if !share.ExpireAt.IsZero() {
 		shareResp.ExpiresIn = createExpireInTextFromDate(share.ExpireAt)
 	}
-	// TODO: add author to db table as optional FK id
-	// TODO: create user table (name, email, hashed password)
-	// TODO: add one test user
-
-	return shareResp
+	if share.AuthorId != -1 {
+		author, err := handler.readUserFromDB(share.AuthorId)
+		if err != nil {
+			return nil, err
+		}
+		shareResp.Author = author.Name
+	}
+	return &shareResp, nil
 }
 
 func createExpireInTextFromDate(expireAt time.Time) string {

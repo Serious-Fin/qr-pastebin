@@ -1,18 +1,3 @@
--- public.users definition
-
--- Drop table
-
--- DROP TABLE public.users;
-
-CREATE TABLE public.users (
-	id int4 NOT NULL,
-	"name" varchar NOT NULL,
-	"password" varchar NOT NULL,
-	author int4 NULL,
-	CONSTRAINT users_pk PRIMARY KEY (id)
-);
-
-
 -- public.shares definition
 
 -- Drop table
@@ -25,5 +10,20 @@ CREATE TABLE public.shares (
 	"content" varchar NULL,
 	"password" varchar NULL,
 	expire_at timestamptz NULL,
+	author int4 NULL,
 	CONSTRAINT shares_pk PRIMARY KEY (id)
+);
+
+
+-- public.users definition
+
+-- Drop table
+
+-- DROP TABLE public.users;
+
+CREATE TABLE public.users (
+	id int4 NOT NULL,
+	"name" varchar NOT NULL,
+	"password" varchar NOT NULL,
+	CONSTRAINT users_pk PRIMARY KEY (id)
 );
