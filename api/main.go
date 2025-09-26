@@ -129,9 +129,9 @@ func GetProtectedShare(c *gin.Context) {
 }
 
 // TODO: implement share expiry (deletes after some time, or becomes unavailable)
-// TODO: implement share protection (can't read without password)
 // TODO: create logging in
 // TODO: if logged in, can see created shares
 // TODO: create share editing page
 // TODO: host via docker
 // TODO: setup HTTPS
+// TODO: add fuent error handling for password display (show error msg instead of error on incorrect pass)

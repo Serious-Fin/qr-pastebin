@@ -1,3 +1,18 @@
+-- public.users definition
+
+-- Drop table
+
+-- DROP TABLE public.users;
+
+CREATE TABLE public.users (
+	id int4 NOT NULL,
+	"name" varchar NOT NULL,
+	"password" varchar NOT NULL,
+	author int4 NULL,
+	CONSTRAINT users_pk PRIMARY KEY (id)
+);
+
+
 -- public.shares definition
 
 -- Drop table
