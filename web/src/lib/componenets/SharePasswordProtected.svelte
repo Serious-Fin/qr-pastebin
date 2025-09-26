@@ -3,6 +3,7 @@
 	import { page } from '$app/state';
 	import { FetchShareStatus, type Share } from '$lib/share';
 	import type { SubmitFunction } from '@sveltejs/kit';
+	import LoadingSpinner from './LoadingSpinner.svelte';
 
 	let { updateShare }: { updateShare: (share: Share, status: FetchShareStatus) => void } = $props();
 
@@ -45,7 +46,13 @@
 		<input type="hidden" name="id" value={page.url.pathname} />
 		<input type="password" name="password" id="password" required />
 	</label>
-	<input type="submit" value="Access" />
+	{#if isLoading}
+		<div id="loadingBox">
+			<LoadingSpinner />
+		</div>
+	{:else}
+		<input type="submit" value="Access" />
+	{/if}
 </form>
 
 {#if err}
@@ -88,5 +95,9 @@
 	#err {
 		color: red;
 		margin-top: 30px;
+	}
+
+	#loadingBox {
+		margin-top: 20px;
 	}
 </style>
