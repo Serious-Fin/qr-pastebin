@@ -94,6 +94,11 @@ func (handler *ShareDBHandler) GetShare(id string) (*GetShareResponse, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	if !share.ExpireAt.IsZero() && time.Now().After(share.ExpireAt) {
+		return nil, errors.New("trying to access expired share")
+	}
+
 	shareResponse, err := handler.createGetShareResponse(share)
 	if err != nil {
 		return nil, err
@@ -105,6 +110,10 @@ func (handler *ShareDBHandler) GetProtectedShare(id string, password string) (*G
 	share, err := handler.readShareFromDB(id)
 	if err != nil {
 		return nil, err
+	}
+
+	if !share.ExpireAt.IsZero() && time.Now().After(share.ExpireAt) {
+		return nil, errors.New("trying to access expired share")
 	}
 
 	passwordOk, err := isPasswordCorrect(&share, password)

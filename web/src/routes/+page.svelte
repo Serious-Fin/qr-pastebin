@@ -11,6 +11,7 @@
 			<label for="expireIn">Expire in:</label>
 			<select class="property-input" name="expireIn" id="expireIn">
 				<option value="" selected>Never</option>
+				<option value="1_minutes">1 minute</option>
 				<option value="10_minutes">10 minutes</option>
 				<option value="1_hours">1 hour</option>
 				<option value="1_days">1 day</option>
