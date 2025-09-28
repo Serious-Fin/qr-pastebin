@@ -1,3 +1,23 @@
+<script lang="ts">
+	import PasswordRequirements from '$lib/componenets/PasswordRequirements.svelte';
+
+	let password = $state('');
+	let passwordMeetsCriteria = $state(false);
+	const lengthMet = $derived(password.length >= 8);
+	const uppercaseMet = $derived(/[A-Z]/.test(password));
+	const lowercaseMet = $derived(/[a-z]/.test(password));
+	const numberMet = $derived(/[0-9]/.test(password));
+	const symbolMet = $derived(/[!@#$%^&*()_+\-_<>,\.{}:;'"|]/.test(password));
+
+	const checkState = () => {
+		if (lengthMet && uppercaseMet && lowercaseMet && numberMet && symbolMet) {
+			passwordMeetsCriteria = true;
+		} else {
+			passwordMeetsCriteria = false;
+		}
+	};
+</script>
+
 <section id="main">
 	<h1>Shareit</h1>
 	<h2>Sign-up</h2>
@@ -5,9 +25,18 @@
 		<label for="name">Name</label>
 		<input type="text" id="name" name="name" />
 		<label for="password">Password</label>
-		<input type="password" id="password" name="password" />
-		<p>Already have an account? <a href="/login">Login</a></p>
-		<input type="submit" value="Sign-up" />
+		<input
+			type="password"
+			id="password"
+			name="password"
+			bind:value={password}
+			onchange={checkState}
+		/>
+
+		<PasswordRequirements {password} />
+
+		<p id="redirect">Already have an account? <a href="/login">Login</a></p>
+		<input type="submit" value="Sign-up" disabled={!passwordMeetsCriteria} />
 	</form>
 </section>
 
@@ -70,7 +99,7 @@
 		transform: translateY(2px);
 	}
 
-	p {
+	#redirect {
 		font-size: 12pt;
 		margin-top: 15px;
 		align-self: baseline;
