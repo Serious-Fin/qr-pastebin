@@ -1,0 +1,46 @@
+package common
+
+import (
+	"context"
+	"fmt"
+
+	"github.com/jackc/pgx/v5"
+	"golang.org/x/crypto/bcrypt"
+)
+
+type User struct {
+	Id       int    `json:"id"`
+	Name     string `json:"name"`
+	Password string `json:"password"`
+}
+
+func CreatePasswordHash(password string) (string, error) {
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return "", err
+	}
+	return string(hash), nil
+}
+
+func IsPasswordCorrect(passwordHash, password string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(passwordHash), []byte(password))
+	return err == nil
+}
+
+func GetUserByName(db *pgx.Conn, name string) (*User, error) {
+	var user User
+	err := db.QueryRow(context.Background(), "SELECT id, name, password FROM users WHERE name = $1;", name).Scan(&user.Id, &user.Name, &user.Password)
+	if err != nil {
+		return nil, fmt.Errorf("error getting user with name '%s': %w", name, err)
+	}
+	return &user, nil
+}
+
+func GetUserById(db *pgx.Conn, id int) (*User, error) {
+	var user User
+	err := db.QueryRow(context.Background(), "SELECT id, name, password FROM users WHERE id = $1;", id).Scan(&user.Id, &user.Name, &user.Password)
+	if err != nil {
+		return nil, fmt.Errorf("error getting user with id '%d': %w", id, err)
+	}
+	return &user, nil
+}

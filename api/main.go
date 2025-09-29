@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"qr-pastebin-api/shares"
+	"qr-pastebin-api/users"
 
 	"github.com/jackc/pgx/v5"
 
@@ -30,6 +31,7 @@ func sendError(c *gin.Context, statusCode int, message string, err error) {
 }
 
 var wrongPasswordErr *shares.PasswordIncorrectError
+var userAlreadyExistsErr *users.UserAlreadyExistsError
 
 func ErrorHandlerMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -46,12 +48,18 @@ func ErrorHandlerMiddleware() gin.HandlerFunc {
 				message = "Wrong password"
 			}
 
+			if errors.As(err, &userAlreadyExistsErr) {
+				statusCode = http.StatusConflict
+				message = "User already exists"
+			}
+
 			sendError(c, statusCode, message, err)
 		}
 	}
 }
 
 var shareHandler shares.ShareDBHandler
+var userHandler users.UserDBHandler
 
 func main() {
 	fmt.Println(os.Getenv("DATABASE_URL"))
@@ -63,6 +71,7 @@ func main() {
 	defer conn.Close(context.Background())
 
 	shareHandler = *shares.NewShareHandler(conn)
+	userHandler = *users.NewUserHandler(conn)
 
 	router := gin.Default()
 	router.Use(cors.New(cors.Config{
@@ -75,6 +84,7 @@ func main() {
 	router.GET("/share/:id", GetShare)
 	router.POST("/share/:id/protected", GetProtectedShare)
 	router.GET("/share/:id/protected", IsPasswordProtected)
+	router.POST("/user", CreateUser)
 	router.Run("0.0.0.0:8080")
 }
 
@@ -127,6 +137,21 @@ func GetProtectedShare(c *gin.Context) {
 		return
 	}
 	c.IndentedJSON(http.StatusOK, response)
+}
+
+func CreateUser(c *gin.Context) {
+	var body users.CreateUserRequest
+	if err := c.ShouldBind(&body); err != nil {
+		c.Error(err)
+		return
+	}
+
+	err := userHandler.CreateUser(body)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+	c.IndentedJSON(http.StatusOK, nil)
 }
 
 // TODO: create logging in

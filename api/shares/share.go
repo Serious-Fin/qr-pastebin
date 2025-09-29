@@ -6,12 +6,12 @@ import (
 	"errors"
 	"fmt"
 	"math/rand"
+	"qr-pastebin-api/common"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5"
-	"golang.org/x/crypto/bcrypt"
 )
 
 type Share struct {
@@ -21,12 +21,6 @@ type Share struct {
 	ExpireAt time.Time `json:"expireAt,omitempty"`
 	Password string    `json:"password,omitempty"`
 	AuthorId int       `json:"author,omitempty"`
-}
-
-type User struct {
-	Id       int    `json:"id"`
-	Name     string `json:"name"`
-	Password string `json:"password"`
 }
 
 type GetShareResponse struct {
@@ -116,7 +110,7 @@ func (handler *ShareDBHandler) GetProtectedShare(id string, password string) (*G
 		return nil, errors.New("trying to access expired share")
 	}
 
-	passwordOk := isPasswordCorrect(&share, password)
+	passwordOk := common.IsPasswordCorrect(share.Password, password)
 	if !passwordOk {
 		return nil, &PasswordIncorrectError{}
 	}
@@ -140,14 +134,6 @@ func (handler *ShareDBHandler) IsPasswordProtected(id string) (*IsPasswordProtec
 	}
 }
 
-func isPasswordCorrect(share *Share, password string) bool {
-	err := bcrypt.CompareHashAndPassword([]byte(share.Password), []byte(password))
-	if err != nil {
-		return false
-	}
-	return true
-}
-
 func (handler *ShareDBHandler) readShareFromDB(id string) (Share, error) {
 	var dbShare DBShare
 	err := handler.DB.QueryRow(context.Background(), "SELECT id, title, content, expire_at, password, author FROM shares WHERE id = $1;", id).Scan(&dbShare.Id, &dbShare.Title, &dbShare.Content, &dbShare.ExpireAt, &dbShare.Password, &dbShare.AuthorId)
@@ -157,22 +143,13 @@ func (handler *ShareDBHandler) readShareFromDB(id string) (Share, error) {
 	return convertShareFromDB(dbShare), nil
 }
 
-func (handler *ShareDBHandler) readUserFromDB(id int) (User, error) {
-	var user User
-	err := handler.DB.QueryRow(context.Background(), "SELECT id, name, password FROM users WHERE id = $1;", id).Scan(&user.Id, &user.Name, &user.Password)
-	if err != nil {
-		return User{}, fmt.Errorf("error getting user with id '%d': %w", id, err)
-	}
-	return user, nil
-}
-
 func createNewShare(request CreateShareRequest) (*Share, error) {
 	var share Share
 	share.Id = createRandomId(7)
 	share.Content = request.Content
 	share.Title = request.Title
 	if request.Password != "" {
-		passwordHash, err := createPasswordHash(request.Password)
+		passwordHash, err := common.CreatePasswordHash(request.Password)
 		if err != nil {
 			return nil, err
 		}
@@ -223,14 +200,6 @@ func tryAddColumnToQuery(columnName string, value any, argPos int, columnNames [
 	values = append(values, fmt.Sprintf("$%d", argPos))
 	args = append(args, value)
 	return columnNames, args, values, argPos + 1
-}
-
-func createPasswordHash(password string) (string, error) {
-	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	if err != nil {
-		return "", err
-	}
-	return string(hash), nil
 }
 
 func createExpirationDate(expireIn string) (time.Time, error) {
@@ -310,7 +279,7 @@ func (handler *ShareDBHandler) createGetShareResponse(share Share) (*GetShareRes
 		shareResp.ExpiresIn = createExpireInTextFromDate(share.ExpireAt)
 	}
 	if share.AuthorId != -1 {
-		author, err := handler.readUserFromDB(share.AuthorId)
+		author, err := common.GetUserById(handler.DB, share.AuthorId)
 		if err != nil {
 			return nil, err
 		}

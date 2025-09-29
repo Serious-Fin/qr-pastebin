@@ -1,43 +1,61 @@
 <script lang="ts">
-	import PasswordRequirements from '$lib/componenets/PasswordRequirements.svelte';
+	import PasswordField from '$lib/componenets/PasswordField.svelte';
+	import { enhance } from '$app/forms';
+	import type { SubmitFunction } from '@sveltejs/kit';
 
+	let name = $state('');
 	let password = $state('');
 	let passwordMeetsCriteria = $state(false);
-	const lengthMet = $derived(password.length >= 8);
-	const uppercaseMet = $derived(/[A-Z]/.test(password));
-	const lowercaseMet = $derived(/[a-z]/.test(password));
-	const numberMet = $derived(/[0-9]/.test(password));
-	const symbolMet = $derived(/[!@#$%^&*()_+\-_<>,\.{}:;'"|]/.test(password));
+	let isLoading = $state(false);
+	let err = $state('');
 
-	const checkState = () => {
-		if (lengthMet && uppercaseMet && lowercaseMet && numberMet && symbolMet) {
-			passwordMeetsCriteria = true;
-		} else {
-			passwordMeetsCriteria = false;
-		}
+	const updatePasswordMeetsCriteria = (newState: boolean) => {
+		passwordMeetsCriteria = newState;
+	};
+
+	const handleUserCreation: SubmitFunction = () => {
+		isLoading = true;
+		return async ({ update, result }) => {
+			try {
+				await update();
+				if (result.type === 'success') {
+					if (result.data?.errMsg) {
+						err = result.data.errMsg;
+						name = result.data.user.name;
+						password = result.data.user.password;
+					}
+				} else if (result.type === 'failure') {
+					throw Error(result.data?.message || 'Unknown server error occurred');
+				} else {
+					throw Error('Could not query agent');
+				}
+			} catch (err) {
+				if (err instanceof Error) {
+					console.error('BOOM ERROR');
+					return;
+				}
+			} finally {
+				isLoading = false;
+			}
+		};
 	};
 </script>
 
 <section id="main">
 	<h1>Shareit</h1>
 	<h2>Sign-up</h2>
-	<form>
+	<form method="POST" action="?/createNewUser" use:enhance={handleUserCreation}>
 		<label for="name">Name</label>
-		<input type="text" id="name" name="name" />
-		<label for="password">Password</label>
-		<input
-			type="password"
-			id="password"
-			name="password"
-			bind:value={password}
-			onchange={checkState}
-		/>
+		<input type="text" id="name" name="name" bind:value={name} required />
 
-		<PasswordRequirements {password} />
+		<PasswordField {password} {updatePasswordMeetsCriteria} />
 
 		<p id="redirect">Already have an account? <a href="/login">Login</a></p>
 		<input type="submit" value="Sign-up" disabled={!passwordMeetsCriteria} />
 	</form>
+	{#if err}
+		<p id="err">{err}</p>
+	{/if}
 </section>
 
 <style>
@@ -78,8 +96,7 @@
 		margin-top: 20px;
 	}
 
-	input[type='text'],
-	input[type='password'] {
+	input[type='text'] {
 		padding: 5px 7px;
 		width: 100%;
 	}
@@ -103,5 +120,10 @@
 		font-size: 12pt;
 		margin-top: 15px;
 		align-self: baseline;
+	}
+
+	#err {
+		color: red;
+		margin-top: 30px;
 	}
 </style>

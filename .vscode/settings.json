@@ -5,4 +5,7 @@
   "[svelte]": {
      "editor.defaultFormatter": "svelte.svelte-vscode"
    },
+   "[typescript]": {
+    "editor.defaultFormatter": "rvest.vs-code-prettier-eslint"
+   }
 }

@@ -1,11 +1,32 @@
 <script lang="ts">
-	let { password }: { password: string } = $props();
+	let {
+		password,
+		updatePasswordMeetsCriteria
+	}: { password: string; updatePasswordMeetsCriteria: (newState: boolean) => void } = $props();
 	const lengthMet = $derived(password.length >= 8);
 	const uppercaseMet = $derived(/[A-Z]/.test(password));
 	const lowercaseMet = $derived(/[a-z]/.test(password));
 	const numberMet = $derived(/[0-9]/.test(password));
 	const symbolMet = $derived(/[!@#$%^&*()_+\-_<>,\.{}:;'"|]/.test(password));
+
+	const checkState = () => {
+		if (lengthMet && uppercaseMet && lowercaseMet && numberMet && symbolMet) {
+			updatePasswordMeetsCriteria(true);
+		} else {
+			updatePasswordMeetsCriteria(false);
+		}
+	};
 </script>
+
+<label for="password">Password</label>
+<input
+	type="password"
+	id="password"
+	name="password"
+	bind:value={password}
+	oninput={checkState}
+	required
+/>
 
 <article id="password-tips">
 	<p id="length" class="password-tip" class:met={lengthMet} class:not-met={!lengthMet}>
@@ -40,5 +61,15 @@
 
 	.met {
 		color: green;
+	}
+
+	label {
+		align-self: baseline;
+		margin-top: 20px;
+	}
+
+	input[type='password'] {
+		padding: 5px 7px;
+		width: 100%;
 	}
 </style>
