@@ -1,29 +1,13 @@
-import { createNewUser, UserAlreadyExistsError, type User } from '$lib/user';
-import { fail } from '@sveltejs/kit';
+import { type User } from '$lib/user';
+import type { Actions } from './$types';
 
-export const actions = {
-    createNewUser: async ({ request }) => {
+export const actions: Actions = {
+    login: async ({ request, fetch }) => {
         const data = await request.formData();
         const params: User = {
             name: data.get("name") as string,
             password: data.get("password") as string
         };
-        try {
-            await createNewUser(params);
-        } catch (err) {
-            if (err instanceof UserAlreadyExistsError) {
-                return {
-                    errMsg: err.message,
-                    user: {
-                        name: params.name,
-                        password: params.password
-                    }
-                }
-            }
-            return fail(500, {
-                message: err instanceof Error ? err.message : 'Unknown error'
-            });
-        }
 
         // Try sign user in
         const form = new FormData();
@@ -32,10 +16,14 @@ export const actions = {
 
         // Call your POST endpoint
         try {
-            await fetch('/api/login', {
+            const response = await fetch('/api/login', {
                 method: 'POST',
                 body: form
             });
+            if (!response.ok) {
+                const err : {errMsg: string} = await response.json()
+                throw new Error(err.errMsg)
+            }
         } catch (err) {
             if (err instanceof Error) {
             return {

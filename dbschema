@@ -27,3 +27,19 @@ CREATE TABLE public.users (
 	"password" varchar NOT NULL,
 	CONSTRAINT users_pk PRIMARY KEY (id)
 );
+
+-- Table: public.sessions
+
+-- DROP TABLE IF EXISTS public.sessions;
+
+CREATE TABLE IF NOT EXISTS public.sessions
+(
+    "sessionId" text COLLATE pg_catalog."default" NOT NULL,
+    "userId" integer NOT NULL,
+    "expireAt" date NOT NULL
+)
+
+TABLESPACE pg_default;
+
+ALTER TABLE IF EXISTS public.sessions
+    OWNER to postgres;

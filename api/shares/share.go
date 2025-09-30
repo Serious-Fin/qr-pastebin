@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"math/rand"
 	"qr-pastebin-api/common"
 	"strconv"
 	"strings"
@@ -145,7 +144,7 @@ func (handler *ShareDBHandler) readShareFromDB(id string) (Share, error) {
 
 func createNewShare(request CreateShareRequest) (*Share, error) {
 	var share Share
-	share.Id = createRandomId(7)
+	share.Id = common.CreateRandomId(7)
 	share.Content = request.Content
 	share.Title = request.Title
 	if request.Password != "" {
@@ -164,16 +163,6 @@ func createNewShare(request CreateShareRequest) (*Share, error) {
 	}
 
 	return &share, nil
-}
-
-var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ123456789_")
-
-func createRandomId(length int) string {
-	b := make([]rune, length)
-	for i := range b {
-		b[i] = letters[rand.Intn(len(letters))]
-	}
-	return string(b)
 }
 
 func createInsertStatement(share Share) (string, []any) {

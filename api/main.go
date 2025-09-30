@@ -32,6 +32,7 @@ func sendError(c *gin.Context, statusCode int, message string, err error) {
 
 var wrongPasswordErr *shares.PasswordIncorrectError
 var userAlreadyExistsErr *users.UserAlreadyExistsError
+var wrongNameOrPassErr *users.WrongPasswordError
 
 func ErrorHandlerMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -51,6 +52,11 @@ func ErrorHandlerMiddleware() gin.HandlerFunc {
 			if errors.As(err, &userAlreadyExistsErr) {
 				statusCode = http.StatusConflict
 				message = "User already exists"
+			}
+
+			if errors.As(err, &wrongNameOrPassErr) {
+				statusCode = http.StatusUnauthorized
+				message = wrongNameOrPassErr.Error()
 			}
 
 			sendError(c, statusCode, message, err)
@@ -85,6 +91,7 @@ func main() {
 	router.POST("/share/:id/protected", GetProtectedShare)
 	router.GET("/share/:id/protected", IsPasswordProtected)
 	router.POST("/user", CreateUser)
+	router.POST("/user/session", CreateSession)
 	router.Run("0.0.0.0:8080")
 }
 
@@ -140,7 +147,7 @@ func GetProtectedShare(c *gin.Context) {
 }
 
 func CreateUser(c *gin.Context) {
-	var body users.CreateUserRequest
+	var body users.UserData
 	if err := c.ShouldBind(&body); err != nil {
 		c.Error(err)
 		return
@@ -152,6 +159,21 @@ func CreateUser(c *gin.Context) {
 		return
 	}
 	c.IndentedJSON(http.StatusOK, nil)
+}
+
+func CreateSession(c *gin.Context) {
+	var body users.UserData
+	if err := c.ShouldBind(&body); err != nil {
+		c.Error(err)
+		return
+	}
+
+	response, err := userHandler.CreateSession(body)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+	c.IndentedJSON(http.StatusOK, response)
 }
 
 // TODO: create logging in

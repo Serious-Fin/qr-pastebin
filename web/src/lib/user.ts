@@ -10,6 +10,13 @@ export class UserAlreadyExistsError extends Error {
         Object.setPrototypeOf(this, UserAlreadyExistsError.prototype);
     }
 }
+export class WrongNameOrPassError extends Error {
+    constructor() {
+        super("Wrong name or password");
+        this.name = "WrongNameOrPassError";
+        Object.setPrototypeOf(this, WrongNameOrPassError.prototype);
+    }
+}
 
 export async function createNewUser(user: User) {
     try {
@@ -26,7 +33,7 @@ export async function createNewUser(user: User) {
 		if (!response.ok) {
 			const errorBody = await response.json().catch(() => ({ message: response.statusText }));
 			throw new Error(
-				`Error creating share ${response.status} - ${errorBody.message || 'Unknown error'}`
+				`Error creating user ${response.status} - ${errorBody.message || 'Unknown error'}`
 			);
 		}
 	} catch (err) {
@@ -34,8 +41,39 @@ export async function createNewUser(user: User) {
             throw err
         }
 		if (err instanceof Error) {
-			throw Error(`Could not call create share endpoint: ${JSON.stringify(err.message)}`);
+			throw Error(`Could not call create user endpoint: ${JSON.stringify(err.message)}`);
 		}
-		throw new Error(`Unknown error while creating share: ${JSON.stringify(err)}`);
+		throw new Error(`Unknown error while creating user: ${JSON.stringify(err)}`);
+	}
+}
+
+export async function tryCreateSessionForUser(user: User): Promise<string> {
+	try {
+		const response = await fetch(`http://localhost:8080/user/session`, {
+			body: JSON.stringify(user),
+			headers: {
+				'Content-Type': 'application/json'
+			},
+			method: 'POST'
+		});
+		if (response.status === 401) {
+			throw new WrongNameOrPassError()
+		}
+		if (!response.ok) {
+			const errorBody = await response.json().catch(() => ({ message: response.statusText }));
+			throw new Error(
+				`Error creating session ${response.status} - ${errorBody.message || 'Unknown error'}`
+			);
+		}
+		const parsedResponse: {sessionId: string} = await response.json()
+		return parsedResponse.sessionId
+	} catch (err) {
+		if (err instanceof WrongNameOrPassError) {
+			throw err
+		}
+		if (err instanceof Error) {
+			throw Error(`Could not call create session endpoint: ${JSON.stringify(err.message)}`);
+		}
+		throw new Error(`Unknown error while creating session: ${JSON.stringify(err)}`);
 	}
 }

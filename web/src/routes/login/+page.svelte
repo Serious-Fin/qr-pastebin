@@ -1,14 +1,55 @@
+<script lang="ts">
+	import { enhance } from '$app/forms';
+	import type { SubmitFunction } from '@sveltejs/kit';
+
+	let name = $state('');
+	let password = $state('');
+	let isLoading = $state(false);
+	let err = $state('');
+
+	const handleLoginErrors: SubmitFunction = () => {
+		isLoading = true;
+		return async ({ update, result }) => {
+			try {
+				await update();
+				if (result.type === 'success') {
+					if (result.data?.errMsg) {
+						err = result.data.errMsg;
+						name = result.data.user.name;
+						password = result.data.user.password;
+					}
+				} else if (result.type === 'failure') {
+					throw Error(result.data?.message || 'Unknown server error occurred');
+				} else {
+					throw Error('Could not query agent');
+				}
+			} catch (err) {
+				if (err instanceof Error) {
+					console.error('BOOM ERROR');
+					return;
+				}
+			} finally {
+				isLoading = false;
+			}
+		};
+	};
+</script>
+
 <section id="main">
 	<h1>Shareit</h1>
 	<h2>Login</h2>
-	<form>
+	<form method="POST" action="?/login" use:enhance={handleLoginErrors}>
 		<label for="name">Name</label>
-		<input type="text" id="name" name="name" />
+		<input type="text" id="name" name="name" bind:value={name} />
 		<label for="password">Password</label>
-		<input type="password" id="password" name="password" />
+		<input type="password" id="password" name="password" bind:value={password} />
 		<p>Don't have an account? <a href="/signup">Sign-up</a></p>
 		<input type="submit" value="Login" />
 	</form>
+
+	{#if err}
+		<p id="err">{err}</p>
+	{/if}
 </section>
 
 <style>
