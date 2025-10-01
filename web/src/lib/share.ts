@@ -15,11 +15,11 @@ export interface Share {
 	title?: string;
 	expiresIn?: string;
 	isPasswordProtected?: boolean;
-	author?: string
+	author?: string;
 }
 
 export interface GetPasswordProtectedShareRequest {
-	password: string
+	password: string;
 }
 
 export enum FetchShareStatus {
@@ -29,11 +29,11 @@ export enum FetchShareStatus {
 }
 
 export class WrongPasswordError extends Error {
-    constructor() {
-        super("Wrong password, try again");
-        this.name = "WrongPasswordError";
-        Object.setPrototypeOf(this, WrongPasswordError.prototype);
-    }
+	constructor() {
+		super('Wrong password, try again');
+		this.name = 'WrongPasswordError';
+		Object.setPrototypeOf(this, WrongPasswordError.prototype);
+	}
 }
 
 export async function createShare(request: CreateShareRequest): Promise<string> {
@@ -88,17 +88,22 @@ export async function isSharePasswordProtected(id: string): Promise<boolean> {
 				`Error fetching password status ${response.status} - ${errorBody.message || 'Unknown error'}`
 			);
 		}
-		const parsedResponse: {isPasswordProtected: boolean} = await response.json()
+		const parsedResponse: { isPasswordProtected: boolean } = await response.json();
 		return parsedResponse.isPasswordProtected;
 	} catch (err) {
 		if (err instanceof Error) {
 			throw Error(`Could not call is password protected endpoint: ${JSON.stringify(err.message)}`);
 		}
-		throw new Error(`Unknown error while calling password protection endpoint: ${JSON.stringify(err)}`);
+		throw new Error(
+			`Unknown error while calling password protection endpoint: ${JSON.stringify(err)}`
+		);
 	}
 }
 
-export async function getPasswordProtectedShare(id: string, body: GetPasswordProtectedShareRequest): Promise<Share> {
+export async function getPasswordProtectedShare(
+	id: string,
+	body: GetPasswordProtectedShareRequest
+): Promise<Share> {
 	try {
 		const response = await fetch(`http://localhost:8080/share/${id}/protected`, {
 			body: JSON.stringify(body),
@@ -108,7 +113,7 @@ export async function getPasswordProtectedShare(id: string, body: GetPasswordPro
 			method: 'POST'
 		});
 		if (response.status === 401) {
-			throw new WrongPasswordError()
+			throw new WrongPasswordError();
 		}
 		if (!response.ok) {
 			const errorBody = await response.json().catch(() => ({ message: response.statusText }));
@@ -119,7 +124,7 @@ export async function getPasswordProtectedShare(id: string, body: GetPasswordPro
 		return await response.json();
 	} catch (err) {
 		if (err instanceof WrongPasswordError) {
-			throw err
+			throw err;
 		}
 		if (err instanceof Error) {
 			throw Error(`Could not call get share endpoint: ${JSON.stringify(err.message)}`);

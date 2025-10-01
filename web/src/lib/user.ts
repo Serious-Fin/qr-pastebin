@@ -1,25 +1,25 @@
 export interface User {
-    name: string;
-    password: string
+	name: string;
+	password: string;
 }
 
 export class UserAlreadyExistsError extends Error {
-    constructor() {
-        super("Name already taken, try a different one");
-        this.name = "UserAlreadyExistsError";
-        Object.setPrototypeOf(this, UserAlreadyExistsError.prototype);
-    }
+	constructor() {
+		super('Name already taken, try a different one');
+		this.name = 'UserAlreadyExistsError';
+		Object.setPrototypeOf(this, UserAlreadyExistsError.prototype);
+	}
 }
 export class WrongNameOrPassError extends Error {
-    constructor() {
-        super("Wrong name or password");
-        this.name = "WrongNameOrPassError";
-        Object.setPrototypeOf(this, WrongNameOrPassError.prototype);
-    }
+	constructor() {
+		super('Wrong name or password');
+		this.name = 'WrongNameOrPassError';
+		Object.setPrototypeOf(this, WrongNameOrPassError.prototype);
+	}
 }
 
 export async function createNewUser(user: User) {
-    try {
+	try {
 		const response = await fetch(`http://localhost:8080/user`, {
 			body: JSON.stringify(user),
 			headers: {
@@ -27,9 +27,9 @@ export async function createNewUser(user: User) {
 			},
 			method: 'POST'
 		});
-        if (response.status === 409) {
-            throw new UserAlreadyExistsError()
-        }
+		if (response.status === 409) {
+			throw new UserAlreadyExistsError();
+		}
 		if (!response.ok) {
 			const errorBody = await response.json().catch(() => ({ message: response.statusText }));
 			throw new Error(
@@ -37,9 +37,9 @@ export async function createNewUser(user: User) {
 			);
 		}
 	} catch (err) {
-        if (err instanceof UserAlreadyExistsError) {
-            throw err
-        }
+		if (err instanceof UserAlreadyExistsError) {
+			throw err;
+		}
 		if (err instanceof Error) {
 			throw Error(`Could not call create user endpoint: ${JSON.stringify(err.message)}`);
 		}
@@ -57,7 +57,7 @@ export async function tryCreateSessionForUser(user: User): Promise<string> {
 			method: 'POST'
 		});
 		if (response.status === 401) {
-			throw new WrongNameOrPassError()
+			throw new WrongNameOrPassError();
 		}
 		if (!response.ok) {
 			const errorBody = await response.json().catch(() => ({ message: response.statusText }));
@@ -65,11 +65,11 @@ export async function tryCreateSessionForUser(user: User): Promise<string> {
 				`Error creating session ${response.status} - ${errorBody.message || 'Unknown error'}`
 			);
 		}
-		const parsedResponse: {sessionId: string} = await response.json()
-		return parsedResponse.sessionId
+		const parsedResponse: { sessionId: string } = await response.json();
+		return parsedResponse.sessionId;
 	} catch (err) {
 		if (err instanceof WrongNameOrPassError) {
-			throw err
+			throw err;
 		}
 		if (err instanceof Error) {
 			throw Error(`Could not call create session endpoint: ${JSON.stringify(err.message)}`);
