@@ -197,7 +197,6 @@ func CreateSession(c *gin.Context) {
 // TODO: create share editing page
 // TODO: host via docker
 // TODO: setup HTTPS
-// TODO: typescript files are not being formatted
 // TODO: move logic from /api/login to just an action
 // TODO: make it so that after login user get's redirected to the same page from where he clicked login button
 // TODO: add a header to layout which shows login/signup buttons or username with button "my shares"
