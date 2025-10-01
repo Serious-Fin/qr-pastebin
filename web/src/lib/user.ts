@@ -3,6 +3,12 @@ export interface User {
 	password: string;
 }
 
+export interface UserWithId {
+	id: number;
+	name: string;
+	password: string;
+}
+
 export class UserAlreadyExistsError extends Error {
 	constructor() {
 		super('Name already taken, try a different one');
@@ -75,5 +81,23 @@ export async function tryCreateSessionForUser(user: User): Promise<string> {
 			throw Error(`Could not call create session endpoint: ${JSON.stringify(err.message)}`);
 		}
 		throw new Error(`Unknown error while creating session: ${JSON.stringify(err)}`);
+	}
+}
+
+export async function tryGetSessionForUser(sessionId: string): Promise<UserWithId> {
+	try {
+		const response = await fetch(`http://localhost:8080/user/session/${sessionId}`);
+		if (!response.ok) {
+			const errorBody = await response.json().catch(() => ({ message: response.statusText }));
+			throw new Error(
+				`Error getting session for user ${response.status} - ${errorBody.message || 'Unknown error'}`
+			);
+		}
+		return await response.json();
+	} catch (err) {
+		if (err instanceof Error) {
+			throw Error(`Could not call get session endpoint: ${JSON.stringify(err.message)}`);
+		}
+		throw new Error(`Unknown error while getting session: ${JSON.stringify(err)}`);
 	}
 }

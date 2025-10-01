@@ -1,43 +1,37 @@
-import { type User } from '$lib/user';
+import { type User, tryCreateSessionForUser } from '$lib/user';
 import { redirect } from '@sveltejs/kit';
 import type { Actions } from './$types';
 
 export const actions: Actions = {
 	login: async ({ request, fetch, cookies }) => {
 		const data = await request.formData();
-		const params: User = {
+		const user: User = {
 			name: data.get('name') as string,
 			password: data.get('password') as string
 		};
 
-		// Try sign user in
-		const form = new FormData();
-		form.append('name', params.name);
-		form.append('password', params.password);
-
-		let redirectTo = '';
+		let redirectTo = '/';
+		let sessionId = '';
 		try {
-			const response = await fetch('/api/login', {
-				method: 'POST',
-				body: form
-			});
-			const body = await response.json();
-
-			if (!response.ok) {
-				throw new Error(body.errMsg ?? 'Login error');
-			}
-			redirectTo = body.redirectTo ?? '/';
+			sessionId = await tryCreateSessionForUser(user);
 		} catch (err) {
 			if (err instanceof Error) {
 				return {
 					errMsg: err.message,
 					user: {
-						name: params.name,
-						password: params.password
+						name: user.name,
+						password: user.password
 					}
 				};
 			}
 		}
+
+		cookies.set('session', sessionId, {
+			httpOnly: true,
+			sameSite: 'lax',
+			path: '/',
+			maxAge: 60 * 60 * 24 * 7
+		});
 		throw redirect(303, redirectTo);
 	}
 };

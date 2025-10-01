@@ -83,6 +83,15 @@ func (handler *UserDBHandler) CreateSession(request UserData) (*CreateSessionRes
 	return &CreateSessionResponse{SessionId: sessionId}, nil
 }
 
+func (handler *UserDBHandler) GetUserFromSession(sessionId string) (*common.User, error) {
+	var user common.User
+	err := handler.DB.QueryRow(context.Background(), "SELECT u.id, u.name, u.password FROM users AS u RIGHT JOIN sessions AS s ON u.id = s.user_id WHERE expire_at > $1;", time.Now()).Scan(&user.Id, &user.Name, &user.PasswordHash)
+	if err != nil {
+		return nil, fmt.Errorf("error getting user from session '%s': %w", sessionId, err)
+	}
+	return &user, nil
+}
+
 func (handler *UserDBHandler) getActiveSession(userId int) (string, error) {
 	var session Session
 	err := handler.DB.QueryRow(context.Background(), "SELECT session_id FROM sessions WHERE user_id = $1 AND expire_at > $2;", userId, time.Now()).Scan(&session.SessionId)

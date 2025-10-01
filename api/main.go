@@ -91,7 +91,7 @@ func main() {
 	router.POST("/share/:id/protected", GetProtectedShare)
 	router.GET("/share/:id/protected", IsPasswordProtected)
 	router.POST("/user", CreateUser)
-	router.GET("/user", GetUser)
+	router.GET("/user/session/:sessionId", GetUser)
 	router.POST("/user/session", CreateSession)
 	router.Run("0.0.0.0:8080")
 }
@@ -163,18 +163,13 @@ func CreateUser(c *gin.Context) {
 }
 
 func GetUser(c *gin.Context) {
-	var body users.UserData
-	if err := c.ShouldBind(&body); err != nil {
-		c.Error(err)
-		return
-	}
-
-	err := userHandler.CreateUser(body)
+	sessionId := c.Param("sessionId")
+	user, err := userHandler.GetUserFromSession(sessionId)
 	if err != nil {
 		c.Error(err)
 		return
 	}
-	c.IndentedJSON(http.StatusOK, nil)
+	c.IndentedJSON(http.StatusOK, user)
 }
 
 func CreateSession(c *gin.Context) {
@@ -197,7 +192,6 @@ func CreateSession(c *gin.Context) {
 // TODO: create share editing page
 // TODO: host via docker
 // TODO: setup HTTPS
-// TODO: move logic from /api/login to just an action
 // TODO: make it so that after login user get's redirected to the same page from where he clicked login button
 // TODO: add a header to layout which shows login/signup buttons or username with button "my shares"
 // TODO: add hooks.serser.ts which gets user by their session id and returns as locals
@@ -207,3 +201,4 @@ func CreateSession(c *gin.Context) {
 // TODO: add form page where user can edit share and save it
 // TODO: add share save after edit functionality
 // TODO: clean up error handling
+// TODO: clean up objects, seems like I have hundreds of different interfaces
