@@ -91,6 +91,7 @@ func main() {
 	router.POST("/share/:id/protected", GetProtectedShare)
 	router.GET("/share/:id/protected", IsPasswordProtected)
 	router.POST("/user", CreateUser)
+	router.GET("/user", GetUser)
 	router.POST("/user/session", CreateSession)
 	router.Run("0.0.0.0:8080")
 }
@@ -161,6 +162,21 @@ func CreateUser(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, nil)
 }
 
+func GetUser(c *gin.Context) {
+	var body users.UserData
+	if err := c.ShouldBind(&body); err != nil {
+		c.Error(err)
+		return
+	}
+
+	err := userHandler.CreateUser(body)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+	c.IndentedJSON(http.StatusOK, nil)
+}
+
 func CreateSession(c *gin.Context) {
 	var body users.UserData
 	if err := c.ShouldBind(&body); err != nil {
@@ -181,3 +197,12 @@ func CreateSession(c *gin.Context) {
 // TODO: create share editing page
 // TODO: host via docker
 // TODO: setup HTTPS
+// TODO: typescript files are not being formatted
+// TODO: move logic from /api/login to just an action
+// TODO: add a header to layout which shows login/signup buttons or username with button "my shares"
+// TODO: add hooks.serser.ts which gets user by their session id and returns as locals
+// TODO: add user_id to share creation if such exists during creation process
+// TODO: add page which displays all created shares
+// TODO: add button to each share to edit it
+// TODO: add form page where user can edit share and save it
+// TODO: add share save after edit functionality

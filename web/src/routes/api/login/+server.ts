@@ -1,6 +1,6 @@
 import { tryCreateSessionForUser } from '$lib/user'
 import type { RequestHandler } from './$types'
-import { redirect, json } from '@sveltejs/kit'
+import { json } from '@sveltejs/kit'
 
 export const POST: RequestHandler = async ({ url, request, cookies }) => {
 	const formData = await request.formData()
@@ -24,8 +24,8 @@ export const POST: RequestHandler = async ({ url, request, cookies }) => {
         path: '/',
         maxAge: 60 * 60 * 24 * 7
     })
-    
+
 	const redirectTo = url.searchParams.get('redirectTo')
 	const decodedRedirectTo = redirectTo ? decodeURIComponent(redirectTo) : '/'
-	throw redirect(302, `${decodedRedirectTo}`)
+	return json({success: true, redirectTo: decodedRedirectTo })
 }

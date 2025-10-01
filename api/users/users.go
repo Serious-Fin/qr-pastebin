@@ -65,9 +65,10 @@ func (handler *UserDBHandler) CreateSession(request UserData) (*CreateSessionRes
 	// Try get active session for this user
 	sessionId, err := handler.getActiveSession(user.Id)
 	if err == nil {
+		fmt.Println("Found active session for user " + user.Name)
 		return &CreateSessionResponse{SessionId: sessionId}, nil
 	}
-
+	fmt.Println("No active session for user " + user.Name)
 	// If no active session, then clean all expired sessions
 	err = handler.deleteSessions(user.Id)
 	if err != nil {
@@ -84,7 +85,7 @@ func (handler *UserDBHandler) CreateSession(request UserData) (*CreateSessionRes
 
 func (handler *UserDBHandler) getActiveSession(userId int) (string, error) {
 	var session Session
-	err := handler.DB.QueryRow(context.Background(), "SELECT sessionId FROM sessions WHERE userId = $1 AND expireAt > $1;", userId, time.Now()).Scan(&session.SessionId)
+	err := handler.DB.QueryRow(context.Background(), "SELECT session_id FROM sessions WHERE user_id = $1 AND expire_at > $2;", userId, time.Now()).Scan(&session.SessionId)
 	if err != nil {
 		return "", fmt.Errorf("error getting session with user id '%d': %w", userId, err)
 	}
@@ -92,7 +93,7 @@ func (handler *UserDBHandler) getActiveSession(userId int) (string, error) {
 }
 
 func (handler *UserDBHandler) deleteSessions(userId int) error {
-	_, err := handler.DB.Exec(context.Background(), "DELETE FROM sessions WHERE userId = $1;", userId)
+	_, err := handler.DB.Exec(context.Background(), "DELETE FROM sessions WHERE user_id = $1;", userId)
 	if err != nil {
 		return fmt.Errorf("error deleting sessions for user with id '%d': %w", userId, err)
 	}
@@ -100,7 +101,7 @@ func (handler *UserDBHandler) deleteSessions(userId int) error {
 }
 
 func (handler *UserDBHandler) createNewSession(userId int) (string, error) {
-	query := "INSERT INTO sessions (sessionId, userId, expireAt) VALUES ($1, $2, $3);"
+	query := "INSERT INTO sessions (session_id, user_id, expire_at) VALUES ($1, $2, $3);"
 	sessionId := common.CreateRandomId(10)
 
 	_, err := handler.DB.Exec(context.Background(), query, sessionId, userId, time.Now().AddDate(0, 0, 7))

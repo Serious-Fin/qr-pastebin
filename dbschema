@@ -34,9 +34,9 @@ CREATE TABLE public.users (
 
 CREATE TABLE IF NOT EXISTS public.sessions
 (
-    "sessionId" text COLLATE pg_catalog."default" NOT NULL,
-    "userId" integer NOT NULL,
-    "expireAt" date NOT NULL
+    session_id text COLLATE pg_catalog."default" NOT NULL,
+    user_id int4 NOT NULL,
+    expire_at timestamp with time zone NOT NULL
 )
 
 TABLESPACE pg_default;

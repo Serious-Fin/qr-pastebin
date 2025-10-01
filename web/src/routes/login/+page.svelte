@@ -18,6 +18,8 @@
 						name = result.data.user.name;
 						password = result.data.user.password;
 					}
+				} else if (result.type === 'redirect') {
+					return;
 				} else if (result.type === 'failure') {
 					throw Error(result.data?.message || 'Unknown server error occurred');
 				} else {
