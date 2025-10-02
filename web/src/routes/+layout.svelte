@@ -3,6 +3,7 @@
 	import '../app.css';
 	import type { LayoutProps } from './$types';
 	import { page } from '$app/state';
+	import { Toaster } from 'svelte-sonner';
 
 	let { children, data }: LayoutProps = $props();
 
@@ -16,6 +17,8 @@
 <svelte:head>
 	<link rel="icon" href={favicon} />
 </svelte:head>
+
+<Toaster position="top-center" richColors duration={3600} />
 
 <div id="header-box">
 	<div id="login-box">

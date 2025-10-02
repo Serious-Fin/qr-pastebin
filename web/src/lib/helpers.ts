@@ -1,3 +1,15 @@
+import { toast } from 'svelte-sonner';
+
+export function logError(msgToUser: string, err: Error) {
+	toast.error(msgToUser);
+
+	console.error(err);
+}
+
+export function logSuccess(msg: string) {
+	toast.success(msg);
+}
+
 export function truncateString(text: string, maxLength: number): string {
 	if (text.length <= maxLength) {
 		return text;

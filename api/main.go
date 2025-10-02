@@ -268,10 +268,6 @@ func CreateSession(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, response)
 }
 
-// TODO: Add Toast popup to project
-// TODO: Show toast pop-up on successful delete
-// TODO: Show toast pop-up on error deleting
-
 // TODO: show additional information on share edit page (when it expires, is password protected)
 // TODO: add an option to hide author name on creating a share
 

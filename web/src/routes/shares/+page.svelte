@@ -1,8 +1,32 @@
 <script lang="ts">
 	import type { PageProps } from './$types';
-	import { truncateString } from '$lib/helpers';
+	import { logError, logSuccess, truncateString } from '$lib/helpers';
+	import { enhance } from '$app/forms';
+	import type { SubmitFunction } from '@sveltejs/kit';
+	import LoadingSpinner from '$lib/componenets/LoadingSpinner.svelte';
 
 	let { data }: PageProps = $props();
+	let isLoadingDelete = $state(false);
+
+	const handleDeleteSubmissionError: SubmitFunction = () => {
+		return async ({ update, result }) => {
+			isLoadingDelete = true;
+			try {
+				await update();
+				if (result.type === 'success') {
+					logSuccess('Share deleted');
+				} else if (result.type === 'failure') {
+					throw Error(result.data?.message || 'Unknown server error occurred');
+				}
+			} catch (err) {
+				if (err instanceof Error) {
+					logError('Error deleting share, try again later', err);
+				}
+			} finally {
+				isLoadingDelete = false;
+			}
+		};
+	};
 </script>
 
 <section id="main">
@@ -24,9 +48,13 @@
 					<button class="button">Edit</button>
 				</form>
 
-				<form method="POST" action="?/deleteShare">
-					<input type="hidden" id="shareId" name="shareId" value={share.id} />
-					<input type="submit" value="Delete" class="button delete" />
+				<form method="POST" action="?/deleteShare" use:enhance={handleDeleteSubmissionError}>
+					{#if isLoadingDelete}
+						<LoadingSpinner />
+					{:else}
+						<input type="hidden" id="shareId" name="shareId" value={share.id} />
+						<input type="submit" value="Delete" class="button delete" />
+					{/if}
 				</form>
 			</div>
 		</div>

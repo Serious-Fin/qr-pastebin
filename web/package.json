@@ -34,6 +34,7 @@
 	},
 	"dependencies": {
 		"@types/qrcode": "^1.5.5",
-		"qrcode": "^1.5.4"
+		"qrcode": "^1.5.4",
+		"svelte-sonner": "^1.0.5"
 	}
 }
