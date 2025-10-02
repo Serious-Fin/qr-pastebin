@@ -277,6 +277,9 @@ func CreateSession(c *gin.Context) {
 // TODO: hook up "save edit" button to submit changes to API
 // TODO: add toast message on success or failure
 
+// TODO: add user roles (user/admin)
+// TODO: if user is admin, he has a "delete share" button
+
 // TODO: clean up objects in API (seems like I have 5 different User objects, 5 different share objects)
 // TODO: clean up error handling in API
 // TODO: add logging to discord of errors
