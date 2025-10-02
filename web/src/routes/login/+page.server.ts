@@ -18,7 +18,7 @@ export const actions: Actions = {
 			password: data.get('password') as string
 		};
 
-		let redirectTo = '/';
+		const redirectTo = (data.get('redirectTo') as string) ?? '/';
 		let sessionId = '';
 		try {
 			sessionId = await tryCreateSessionForUser(user);

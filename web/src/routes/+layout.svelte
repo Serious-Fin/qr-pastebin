@@ -5,6 +5,12 @@
 	import { page } from '$app/state';
 
 	let { children, data }: LayoutProps = $props();
+
+	let redirectTo = $state(page.url.searchParams.get('redirectTo') ?? '/');
+	const pathName = page.url.pathname;
+	if (pathName !== '/login' && pathName !== '/signup') {
+		redirectTo = pathName;
+	}
 </script>
 
 <svelte:head>
@@ -22,8 +28,8 @@
 			>
 			<p>{data.username}</p>
 		{:else}
-			<a href="/login">Login</a>
-			<a href="/signup">Sign-up</a>
+			<a href={`/login?redirectTo=${encodeURIComponent(redirectTo)}`}>Login</a>
+			<a href={`/signup?redirectTo=${encodeURIComponent(redirectTo)}`}>Sign-up</a>
 		{/if}
 	</div>
 

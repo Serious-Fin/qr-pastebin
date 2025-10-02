@@ -39,7 +39,7 @@ export const actions = {
 		}
 
 		let sessionId = '';
-		let redirectTo = '/';
+		const redirectTo = (data.get('redirectTo') as string) ?? '/';
 		try {
 			sessionId = await tryCreateSessionForUser(user);
 		} catch (err) {

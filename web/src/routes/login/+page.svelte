@@ -2,6 +2,7 @@
 	import { enhance } from '$app/forms';
 	import type { SubmitFunction } from '@sveltejs/kit';
 	import type { PageProps } from './$types';
+	import { page } from '$app/state';
 
 	let { data }: PageProps = $props();
 
@@ -9,6 +10,7 @@
 	let password = $state('');
 	let isLoading = $state(false);
 	let err = $state('');
+	let redirectTo = $state(page.url.searchParams.get('redirectTo') ?? '/');
 
 	const handleLoginErrors: SubmitFunction = () => {
 		isLoading = true;
@@ -53,6 +55,8 @@
 			{#if err}
 				<p id="err">{err}</p>
 			{/if}
+
+			<input type="hidden" id="redirectTo" name="redirectTo" bind:value={redirectTo} />
 		</form>
 	{:else}
 		<p id="already-have-acc">Already logged in as {data.username}</p>{/if}

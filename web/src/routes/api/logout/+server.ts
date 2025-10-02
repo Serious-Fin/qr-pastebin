@@ -1,5 +1,4 @@
 import { redirect } from '@sveltejs/kit';
-import { page } from '$app/state';
 
 export async function GET({ cookies, url }) {
 	cookies.delete('session', { path: '/' });

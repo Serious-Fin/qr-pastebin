@@ -191,7 +191,7 @@ func CreateSession(c *gin.Context) {
 // TODO: create share editing page
 // TODO: host via docker
 // TODO: setup HTTPS
-// TODO: make it so that after login user get's redirected to the same page from where he clicked login button
+
 // TODO: add user_id to share creation if such exists during creation process
 // TODO: add page which displays all created shares
 // TODO: add button to each share to edit it
@@ -199,3 +199,5 @@ func CreateSession(c *gin.Context) {
 // TODO: add share save after edit functionality
 // TODO: clean up error handling
 // TODO: clean up objects, seems like I have hundreds of different interfaces
+
+// TODO: add loading to login/signup
