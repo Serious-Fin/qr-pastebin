@@ -199,5 +199,3 @@ func CreateSession(c *gin.Context) {
 // TODO: add share save after edit functionality
 // TODO: clean up error handling
 // TODO: clean up objects, seems like I have hundreds of different interfaces
-
-// TODO: add loading to login/signup

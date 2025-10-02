@@ -3,6 +3,7 @@
 	import type { SubmitFunction } from '@sveltejs/kit';
 	import type { PageProps } from './$types';
 	import { page } from '$app/state';
+	import LoadingSpinner from '$lib/componenets/LoadingSpinner.svelte';
 
 	let { data }: PageProps = $props();
 
@@ -51,7 +52,15 @@
 			<label for="password">Password</label>
 			<input type="password" id="password" name="password" bind:value={password} />
 			<p>Don't have an account? <a href="/signup">Sign-up</a></p>
-			<input type="submit" value="Login" />
+
+			{#if isLoading}
+				<div id="loadingBox">
+					<LoadingSpinner />
+				</div>
+			{:else}
+				<input type="submit" value="Login" />
+			{/if}
+
 			{#if err}
 				<p id="err">{err}</p>
 			{/if}
@@ -135,5 +144,9 @@
 		color: red;
 		margin-top: 30px;
 		align-self: center;
+	}
+
+	#loadingBox {
+		margin-top: 20px;
 	}
 </style>

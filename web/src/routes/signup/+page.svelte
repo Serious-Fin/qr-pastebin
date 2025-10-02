@@ -4,6 +4,7 @@
 	import type { SubmitFunction } from '@sveltejs/kit';
 	import type { PageProps } from './$types';
 	import { page } from '$app/state';
+	import LoadingSpinner from '$lib/componenets/LoadingSpinner.svelte';
 
 	let { data }: PageProps = $props();
 
@@ -58,7 +59,14 @@
 			<PasswordField {password} {updatePasswordMeetsCriteria} />
 
 			<p id="redirect">Already have an account? <a href="/login">Login</a></p>
-			<input type="submit" value="Sign-up" disabled={!passwordMeetsCriteria} />
+			{#if isLoading}
+				<div id="loadingBox">
+					<LoadingSpinner />
+				</div>
+			{:else}
+				<input type="submit" value="Sign-up" disabled={!passwordMeetsCriteria} />
+			{/if}
+
 			{#if err}
 				<p id="err">{err}</p>
 			{/if}
@@ -142,5 +150,9 @@
 
 	#already-have-acc {
 		margin-top: 40px;
+	}
+
+	#loadingBox {
+		margin-top: 20px;
 	}
 </style>
