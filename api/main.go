@@ -123,7 +123,6 @@ func main() {
 	}
 
 	router.POST("/share", CreateShare)
-	//router.GET("/shares/:userId", GetShares)
 	router.GET("/share/:id", GetShare)
 	router.POST("/share/:id/protected", GetProtectedShare)
 	router.GET("/share/:id/protected", IsPasswordProtected)
@@ -247,13 +246,30 @@ func CreateSession(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, response)
 }
 
-// TODO: add form page where user can edit share and save it
-// TODO: add share save after edit functionality
-// TODO: clean up error handling
-// TODO: clean up objects, seems like I have hundreds of different interfaces
-// TODO: hook-up share deleting
+// TODO: Create DELETE functionality in API
+// TODO: Hook up share deleting functionality in frontend
+// TODO: Add Toast popup to project
+// TODO: Show toast pop-up on successful delete
+// TODO: Show toast pop-up on error deleting
 
-// TODO: maybe it would be cleaner to send authorization (session id) via HTTP Header instead
+// TODO: show additional information on share edit page (when it expires, is password protected)
+// TODO: add an option to hide author name on creating a share
+
+// TODO: add form page where user can edit share info/options
+// TODO: load up existing share data on edit page
+// TODO: add API functionality to update share info
+// TODO: hook up "save edit" button to submit changes to API
+// TODO: add toast message on success or failure
+
+// TODO: clean up objects in API (seems like I have 5 different User objects, 5 different share objects)
+// TODO: clean up error handling in API
+// TODO: add logging to discord of errors
+// TODO: clean up API code (methods that do similar things, naming)
+
+// TODO: clean up objects in WEB
+// TODO: clean up error handling in WEB
+// TODO: add logging to discord of errors
+// TODO: clean up WEB code
 
 // TODO: host via docker
 // TODO: setup HTTPS
