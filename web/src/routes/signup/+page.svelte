@@ -2,6 +2,9 @@
 	import PasswordField from '$lib/componenets/PasswordField.svelte';
 	import { enhance } from '$app/forms';
 	import type { SubmitFunction } from '@sveltejs/kit';
+	import type { PageProps } from './$types';
+
+	let { data }: PageProps = $props();
 
 	let name = $state('');
 	let password = $state('');
@@ -24,6 +27,8 @@
 						name = result.data.user.name;
 						password = result.data.user.password;
 					}
+				} else if (result.type === 'redirect') {
+					return;
 				} else if (result.type === 'failure') {
 					throw Error(result.data?.message || 'Unknown server error occurred');
 				} else {
@@ -31,8 +36,7 @@
 				}
 			} catch (err) {
 				if (err instanceof Error) {
-					console.error('BOOM ERROR');
-					return;
+					console.error(`Error signing in: ${JSON.stringify(err)}`);
 				}
 			} finally {
 				isLoading = false;
@@ -42,19 +46,23 @@
 </script>
 
 <section id="main">
-	<h1>Shareit</h1>
-	<h2>Sign-up</h2>
-	<form method="POST" action="?/createNewUser" use:enhance={handleUserCreation}>
-		<label for="name">Name</label>
-		<input type="text" id="name" name="name" bind:value={name} required />
+	{#if data.userId === -1}
+		<h1>Shareit</h1>
+		<h2>Sign-up</h2>
+		<form method="POST" action="?/createNewUser" use:enhance={handleUserCreation}>
+			<label for="name">Name</label>
+			<input type="text" id="name" name="name" bind:value={name} required />
 
-		<PasswordField {password} {updatePasswordMeetsCriteria} />
+			<PasswordField {password} {updatePasswordMeetsCriteria} />
 
-		<p id="redirect">Already have an account? <a href="/login">Login</a></p>
-		<input type="submit" value="Sign-up" disabled={!passwordMeetsCriteria} />
-	</form>
-	{#if err}
-		<p id="err">{err}</p>
+			<p id="redirect">Already have an account? <a href="/login">Login</a></p>
+			<input type="submit" value="Sign-up" disabled={!passwordMeetsCriteria} />
+		</form>
+		{#if err}
+			<p id="err">{err}</p>
+		{/if}
+	{:else}
+		<p id="already-have-acc">Already signed in as {data.username}</p>
 	{/if}
 </section>
 
@@ -125,5 +133,9 @@
 	#err {
 		color: red;
 		margin-top: 30px;
+	}
+
+	#already-have-acc {
+		margin-top: 40px;
 	}
 </style>

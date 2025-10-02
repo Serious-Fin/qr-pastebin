@@ -1,9 +1,17 @@
 import { type User, tryCreateSessionForUser } from '$lib/user';
 import { redirect } from '@sveltejs/kit';
 import type { Actions } from './$types';
+import type { PageServerLoad } from './$types';
+
+export const load: PageServerLoad = ({ locals }) => {
+	return {
+		userId: locals.user?.id ?? -1,
+		username: locals.user?.name ?? 'Anon'
+	};
+};
 
 export const actions: Actions = {
-	login: async ({ request, fetch, cookies }) => {
+	login: async ({ request, cookies }) => {
 		const data = await request.formData();
 		const user: User = {
 			name: data.get('name') as string,

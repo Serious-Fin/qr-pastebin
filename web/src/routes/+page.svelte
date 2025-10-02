@@ -86,7 +86,7 @@
 		padding: 10px 20px;
 		background-color: var(--accent);
 		border: none;
-		box-shadow: 2px 2px 2px 2px rgba(0, 0, 0, 0.199);
+		box-shadow: 2px 2px 2px 2px rgba(0, 0, 0, 0.2);
 		border-radius: 10px;
 		margin-top: 20px;
 		font-size: 12pt;

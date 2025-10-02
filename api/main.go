@@ -187,14 +187,11 @@ func CreateSession(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, response)
 }
 
-// TODO: create logging in
 // TODO: if logged in, can see created shares
 // TODO: create share editing page
 // TODO: host via docker
 // TODO: setup HTTPS
 // TODO: make it so that after login user get's redirected to the same page from where he clicked login button
-// TODO: add a header to layout which shows login/signup buttons or username with button "my shares"
-// TODO: add hooks.serser.ts which gets user by their session id and returns as locals
 // TODO: add user_id to share creation if such exists during creation process
 // TODO: add page which displays all created shares
 // TODO: add button to each share to edit it

@@ -7,7 +7,9 @@ export const handle: Handle = async ({ event, resolve }) => {
 		event.locals.sessionId = sessionId;
 
 		try {
+			console.log(sessionId);
 			const user = await tryGetSessionForUser(sessionId);
+			console.log(user);
 			event.locals.user = {
 				id: user.id,
 				name: user.name

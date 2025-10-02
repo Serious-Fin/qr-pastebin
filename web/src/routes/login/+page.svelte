@@ -1,6 +1,9 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import type { SubmitFunction } from '@sveltejs/kit';
+	import type { PageProps } from './$types';
+
+	let { data }: PageProps = $props();
 
 	let name = $state('');
 	let password = $state('');
@@ -27,8 +30,7 @@
 				}
 			} catch (err) {
 				if (err instanceof Error) {
-					console.error('BOOM ERROR');
-					return;
+					console.error(`Error logging in: ${JSON.stringify(err)}`);
 				}
 			} finally {
 				isLoading = false;
@@ -38,20 +40,22 @@
 </script>
 
 <section id="main">
-	<h1>Shareit</h1>
-	<h2>Login</h2>
-	<form method="POST" action="?/login" use:enhance={handleLoginErrors}>
-		<label for="name">Name</label>
-		<input type="text" id="name" name="name" bind:value={name} />
-		<label for="password">Password</label>
-		<input type="password" id="password" name="password" bind:value={password} />
-		<p>Don't have an account? <a href="/signup">Sign-up</a></p>
-		<input type="submit" value="Login" />
-	</form>
-
-	{#if err}
-		<p id="err">{err}</p>
-	{/if}
+	{#if data.userId === -1}
+		<h1>Shareit</h1>
+		<h2>Login</h2>
+		<form method="POST" action="?/login" use:enhance={handleLoginErrors}>
+			<label for="name">Name</label>
+			<input type="text" id="name" name="name" bind:value={name} />
+			<label for="password">Password</label>
+			<input type="password" id="password" name="password" bind:value={password} />
+			<p>Don't have an account? <a href="/signup">Sign-up</a></p>
+			<input type="submit" value="Login" />
+			{#if err}
+				<p id="err">{err}</p>
+			{/if}
+		</form>
+	{:else}
+		<p id="already-have-acc">Already logged in as {data.username}</p>{/if}
 </section>
 
 <style>
@@ -117,5 +121,15 @@
 		font-size: 12pt;
 		margin-top: 15px;
 		align-self: baseline;
+	}
+
+	#already-have-acc {
+		margin-top: 40px;
+	}
+
+	#err {
+		color: red;
+		margin-top: 30px;
+		align-self: center;
 	}
 </style>
