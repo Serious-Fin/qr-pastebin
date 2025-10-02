@@ -83,7 +83,7 @@ func AuthMiddleware() gin.HandlerFunc {
 
 		user, err := userHandler.ValidateSession(sessionId)
 		if err != nil {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": fmt.Sprintf("Invalid session token. %w", err)})
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": fmt.Sprintf("Invalid session token. %s", err)})
 			return
 		}
 
