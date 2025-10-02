@@ -2,10 +2,9 @@
 	import favicon from '$lib/assets/favicon.svg';
 	import '../app.css';
 	import type { LayoutProps } from './$types';
+	import { page } from '$app/state';
 
 	let { children, data }: LayoutProps = $props();
-
-	const logout = () => {};
 </script>
 
 <svelte:head>
@@ -15,7 +14,12 @@
 <div id="header-box">
 	<div id="login-box">
 		{#if data.userId !== -1}
-			<button class="button" onclick={() => (window.location.href = '/api/logout')}>Logout</button>
+			<button
+				class="button"
+				onclick={() =>
+					(window.location.href = `/api/logout?redirectTo=${encodeURIComponent(page.url.pathname)}`)}
+				>Logout</button
+			>
 			<p>{data.username}</p>
 		{:else}
 			<a href="/login">Login</a>
@@ -23,9 +27,12 @@
 		{/if}
 	</div>
 
-	{#if data.userId !== -1}
-		<button class="button">My shares</button>
-	{/if}
+	<div id="action-box">
+		{#if data.userId !== -1}
+			<button class="button">My shares</button>
+		{/if}
+		<button class="button" onclick={() => (window.location.href = '/')}>New</button>
+	</div>
 </div>
 
 {@render children?.()}
@@ -41,7 +48,13 @@
 	#login-box {
 		display: flex;
 		align-items: center;
-		gap: 15px;
+		gap: 10px;
+	}
+
+	#action-box {
+		display: flex;
+		align-items: center;
+		gap: 10px;
 	}
 
 	.button {
