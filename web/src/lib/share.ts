@@ -3,6 +3,7 @@ export interface CreateShareRequest {
 	title?: string;
 	password?: string;
 	expireIn?: string;
+	authorId: number;
 }
 
 interface CreateShareResponse {

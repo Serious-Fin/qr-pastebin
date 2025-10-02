@@ -1,3 +1,9 @@
+<script lang="ts">
+	import type { PageProps } from './$types';
+	let { data }: PageProps = $props();
+	let userId = $state(data.userId);
+</script>
+
 <section id="main">
 	<h1>Shareit</h1>
 	<h2>New share</h2>
@@ -25,6 +31,8 @@
 			<label for="password">Password:</label>
 			<input type="password" class="property-input" name="password" id="password" />
 		</div>
+
+		<input type="hidden" id="userId" name="userId" bind:value={userId} />
 
 		<input type="submit" value="Create" />
 	</form>

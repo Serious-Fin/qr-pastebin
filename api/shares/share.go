@@ -49,7 +49,7 @@ type CreateShareRequest struct {
 	Title    string `json:"title,omitempty"`
 	ExpireIn string `json:"expireIn,omitempty"`
 	Password string `json:"password,omitempty"`
-	Author   string `json:"author,omitempty"`
+	AuthorId int32  `json:"authorId"`
 }
 
 type CreateShareResponse struct {
@@ -147,6 +147,7 @@ func createNewShare(request CreateShareRequest) (*Share, error) {
 	share.Id = common.CreateRandomId(7)
 	share.Content = request.Content
 	share.Title = request.Title
+	share.AuthorId = int(request.AuthorId)
 	if request.Password != "" {
 		passwordHash, err := common.CreatePasswordHash(request.Password)
 		if err != nil {
@@ -175,6 +176,7 @@ func createInsertStatement(share Share) (string, []any) {
 	colNames, args, values, argPos = tryAddColumnToQuery("content", share.Content, argPos, colNames, args, values)
 	colNames, args, values, argPos = tryAddColumnToQuery("title", share.Title, argPos, colNames, args, values)
 	colNames, args, values, argPos = tryAddColumnToQuery("expire_at", share.ExpireAt, argPos, colNames, args, values)
+	colNames, args, values, argPos = tryAddColumnToQuery("author", share.AuthorId, argPos, colNames, args, values)
 	colNames, args, values, _ = tryAddColumnToQuery("password", share.Password, argPos, colNames, args, values)
 
 	return fmt.Sprintf("INSERT INTO shares (%s) VALUES (%s);", strings.Join(colNames, ", "), strings.Join(values, ", ")), args

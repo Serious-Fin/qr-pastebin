@@ -192,7 +192,6 @@ func CreateSession(c *gin.Context) {
 // TODO: host via docker
 // TODO: setup HTTPS
 
-// TODO: add user_id to share creation if such exists during creation process
 // TODO: add page which displays all created shares
 // TODO: add button to each share to edit it
 // TODO: add form page where user can edit share and save it
