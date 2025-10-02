@@ -119,3 +119,11 @@ func (handler *UserDBHandler) createNewSession(userId int) (string, error) {
 	}
 	return sessionId, nil
 }
+
+func (handler *UserDBHandler) ValidateSession(sessionID string) (*common.User, error) {
+	user, err := handler.GetUserFromSession(sessionID)
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
+}

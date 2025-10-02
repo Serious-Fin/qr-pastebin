@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"strconv"
+	"strings"
 
 	"qr-pastebin-api/shares"
 	"qr-pastebin-api/users"
@@ -65,6 +65,34 @@ func ErrorHandlerMiddleware() gin.HandlerFunc {
 	}
 }
 
+func AuthMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		authHeader := c.GetHeader("Authorization")
+		if authHeader == "" {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Authorization header is required"})
+			return
+		}
+
+		parts := strings.Split(authHeader, " ")
+		if len(parts) != 2 || parts[0] != "Bearer" {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Authorization header format must be Bearer {token}"})
+			return
+		}
+
+		sessionId := parts[1]
+
+		user, err := userHandler.ValidateSession(sessionId)
+		if err != nil {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": fmt.Sprintf("Invalid session token. %w", err)})
+			return
+		}
+
+		c.Set("userId", user.Id)
+
+		c.Next()
+	}
+}
+
 var shareHandler shares.ShareDBHandler
 var userHandler users.UserDBHandler
 
@@ -87,8 +115,15 @@ func main() {
 		AllowHeaders: []string{"*"},
 	}))
 	router.Use(ErrorHandlerMiddleware())
+
+	api := router.Group("/")
+	api.Use(AuthMiddleware())
+	{
+		api.GET("/shares", GetShares)
+	}
+
 	router.POST("/share", CreateShare)
-	router.GET("/shares/:userId", GetShares)
+	//router.GET("/shares/:userId", GetShares)
 	router.GET("/share/:id", GetShare)
 	router.POST("/share/:id/protected", GetProtectedShare)
 	router.GET("/share/:id/protected", IsPasswordProtected)
@@ -124,7 +159,20 @@ func GetShare(c *gin.Context) {
 }
 
 func GetShares(c *gin.Context) {
-	userId, _ := strconv.Atoi(c.Param("userId"))
+	userIdInterface, exists := c.Get("userId")
+	if !exists {
+		c.Error(errors.New("userId not found in context"))
+		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": "User context not set"})
+		return
+	}
+
+	userId, ok := userIdInterface.(int)
+	if !ok {
+		c.Error(errors.New("userId in context is not an int"))
+		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
+		return
+	}
+
 	response, err := shareHandler.GetShares(userId)
 	if err != nil {
 		c.Error(err)
@@ -199,12 +247,13 @@ func CreateSession(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, response)
 }
 
-// TODO: create share editing page
-// TODO: host via docker
-// TODO: setup HTTPS
-
 // TODO: add form page where user can edit share and save it
 // TODO: add share save after edit functionality
 // TODO: clean up error handling
 // TODO: clean up objects, seems like I have hundreds of different interfaces
 // TODO: hook-up share deleting
+
+// TODO: maybe it would be cleaner to send authorization (session id) via HTTP Header instead
+
+// TODO: host via docker
+// TODO: setup HTTPS

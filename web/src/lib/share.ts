@@ -134,9 +134,13 @@ export async function getPasswordProtectedShare(
 	}
 }
 
-export async function getSharesForUser(userId: string): Promise<Share[]> {
+export async function getSharesForUser(sessionId: string): Promise<Share[]> {
 	try {
-		const response = await fetch(`http://localhost:8080/shares/${userId}`);
+		const response = await fetch(`http://localhost:8080/shares`, {
+			headers: {
+				Authorization: `Bearer ${sessionId}`
+			}
+		});
 		if (!response.ok) {
 			const errorBody = await response.json().catch(() => ({ message: response.statusText }));
 			throw new Error(
