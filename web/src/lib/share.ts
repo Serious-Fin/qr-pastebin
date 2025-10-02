@@ -133,3 +133,21 @@ export async function getPasswordProtectedShare(
 		throw new Error(`Unknown error while getting share: ${JSON.stringify(err)}`);
 	}
 }
+
+export async function getSharesForUser(userId: string): Promise<Share[]> {
+	try {
+		const response = await fetch(`http://localhost:8080/shares/${userId}`);
+		if (!response.ok) {
+			const errorBody = await response.json().catch(() => ({ message: response.statusText }));
+			throw new Error(
+				`Error getting shares ${response.status} - ${errorBody.message || 'Unknown error'}`
+			);
+		}
+		return await response.json();
+	} catch (err) {
+		if (err instanceof Error) {
+			throw Error(`Could not call get shares endpoint: ${JSON.stringify(err.message)}`);
+		}
+		throw new Error(`Unknown error while getting shares: ${JSON.stringify(err)}`);
+	}
+}

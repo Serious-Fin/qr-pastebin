@@ -99,6 +99,14 @@ func (handler *ShareDBHandler) GetShare(id string) (*GetShareResponse, error) {
 	return shareResponse, nil
 }
 
+func (handler *ShareDBHandler) GetShares(userId int) ([]Share, error) {
+	shares, err := handler.readSharesFromDB(userId)
+	if err != nil {
+		return nil, err
+	}
+	return shares, nil
+}
+
 func (handler *ShareDBHandler) GetProtectedShare(id string, password string) (*GetShareResponse, error) {
 	share, err := handler.readShareFromDB(id)
 	if err != nil {
@@ -140,6 +148,30 @@ func (handler *ShareDBHandler) readShareFromDB(id string) (Share, error) {
 		return Share{}, fmt.Errorf("error getting share with id '%s': %w", id, err)
 	}
 	return convertShareFromDB(dbShare), nil
+}
+
+func (handler *ShareDBHandler) readSharesFromDB(userId int) ([]Share, error) {
+	rows, err := handler.DB.Query(context.Background(), "SELECT s.id, s.title, s.content, s.expire_at, s.password, s.author FROM users AS u RIGHT JOIN shares AS s ON u.id = s.author WHERE u.id = $1;", userId)
+	if err != nil {
+		return nil, fmt.Errorf("error querying shares: %w", err)
+	}
+	defer rows.Close()
+
+	shares := make([]Share, 0)
+	for rows.Next() {
+		var dbShare DBShare
+		err := rows.Scan(&dbShare.Id, &dbShare.Title, &dbShare.Content, &dbShare.ExpireAt, &dbShare.Password, &dbShare.AuthorId)
+		if err != nil {
+			return nil, fmt.Errorf("error scanning share row: %w", err)
+		}
+		shares = append(shares, convertShareFromDB(dbShare))
+	}
+	// check for iteration errors
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("row iteration error: %w", err)
+	}
+
+	return shares, nil
 }
 
 func createNewShare(request CreateShareRequest) (*Share, error) {

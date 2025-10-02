@@ -35,7 +35,7 @@
 
 	<div id="action-box">
 		{#if data.userId !== -1}
-			<button class="button">My shares</button>
+			<button class="button" onclick={() => (window.location.href = '/shares')}>My shares</button>
 		{/if}
 		<button class="button" onclick={() => (window.location.href = '/')}>New</button>
 	</div>
@@ -73,7 +73,7 @@
 	}
 
 	.button:active {
-		box-shadow: 1px 1px 1px 1px rgba(0, 0, 0, 0.199);
+		box-shadow: 1px 1px 1px 1px rgba(0, 0, 0, 0.2);
 		transform: translateY(2px);
 	}
 

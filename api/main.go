@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strconv"
 
 	"qr-pastebin-api/shares"
 	"qr-pastebin-api/users"
@@ -87,6 +88,7 @@ func main() {
 	}))
 	router.Use(ErrorHandlerMiddleware())
 	router.POST("/share", CreateShare)
+	router.GET("/shares/:userId", GetShares)
 	router.GET("/share/:id", GetShare)
 	router.POST("/share/:id/protected", GetProtectedShare)
 	router.GET("/share/:id/protected", IsPasswordProtected)
@@ -114,6 +116,16 @@ func CreateShare(c *gin.Context) {
 func GetShare(c *gin.Context) {
 	shareId := c.Param("id")
 	response, err := shareHandler.GetShare(shareId)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+	c.IndentedJSON(http.StatusOK, response)
+}
+
+func GetShares(c *gin.Context) {
+	userId, _ := strconv.Atoi(c.Param("userId"))
+	response, err := shareHandler.GetShares(userId)
 	if err != nil {
 		c.Error(err)
 		return
@@ -187,14 +199,12 @@ func CreateSession(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, response)
 }
 
-// TODO: if logged in, can see created shares
 // TODO: create share editing page
 // TODO: host via docker
 // TODO: setup HTTPS
 
-// TODO: add page which displays all created shares
-// TODO: add button to each share to edit it
 // TODO: add form page where user can edit share and save it
 // TODO: add share save after edit functionality
 // TODO: clean up error handling
 // TODO: clean up objects, seems like I have hundreds of different interfaces
+// TODO: hook-up share deleting
