@@ -129,6 +129,15 @@ func (handler *ShareDBHandler) GetProtectedShare(id string, password string) (*G
 	return shareResponse, nil
 }
 
+func (handler *ShareDBHandler) DeleteShare(shareId string, userId int) error {
+	query := "DELETE FROM shares WHERE id = $1 AND author = $2;"
+	_, err := handler.DB.Exec(context.Background(), query, shareId, userId)
+	if err != nil {
+		return fmt.Errorf("couldn't delete share with id '%s' for user with id '%d': %w", shareId, userId, err)
+	}
+	return nil
+}
+
 func (handler *ShareDBHandler) IsPasswordProtected(id string) (*IsPasswordProtectedResponse, error) {
 	share, err := handler.readShareFromDB(id)
 	if err != nil {

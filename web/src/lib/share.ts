@@ -155,3 +155,25 @@ export async function getSharesForUser(sessionId: string): Promise<Share[]> {
 		throw new Error(`Unknown error while getting shares: ${JSON.stringify(err)}`);
 	}
 }
+
+export async function deleteShare(shareId: string, sessionId: string): Promise<void> {
+	try {
+		const response = await fetch(`http://localhost:8080/share/${shareId}`, {
+			headers: {
+				Authorization: `Bearer ${sessionId}`
+			},
+			method: 'DELETE'
+		});
+		if (!response.ok) {
+			const errorBody = await response.json().catch(() => ({ message: response.statusText }));
+			throw new Error(
+				`Error deleting share ${response.status} - ${errorBody.message || 'Unknown error'}`
+			);
+		}
+	} catch (err) {
+		if (err instanceof Error) {
+			throw Error(`Could not call delete share endpoint: ${JSON.stringify(err.message)}`);
+		}
+		throw new Error(`Unknown error while deleting share: ${JSON.stringify(err)}`);
+	}
+}

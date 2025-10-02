@@ -19,8 +19,15 @@
 			<p class="content">{truncateString(share.content, 100)}</p>
 
 			<div class="buttons">
-				<button class="button">Edit</button>
-				<button class="button delete">Delete</button>
+				<form method="POST" action="?/editShare">
+					<input type="hidden" id="shareId" name="shareId" value={share.id} />
+					<button class="button">Edit</button>
+				</form>
+
+				<form method="POST" action="?/deleteShare">
+					<input type="hidden" id="shareId" name="shareId" value={share.id} />
+					<input type="submit" value="Delete" class="button delete" />
+				</form>
 			</div>
 		</div>
 	{/each}

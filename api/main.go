@@ -120,6 +120,7 @@ func main() {
 	api.Use(AuthMiddleware())
 	{
 		api.GET("/shares", GetShares)
+		api.DELETE("/share/:id", DeleteShare)
 	}
 
 	router.POST("/share", CreateShare)
@@ -157,18 +158,26 @@ func GetShare(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, response)
 }
 
-func GetShares(c *gin.Context) {
-	userIdInterface, exists := c.Get("userId")
-	if !exists {
-		c.Error(errors.New("userId not found in context"))
-		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": "User context not set"})
+func DeleteShare(c *gin.Context) {
+	shareId := c.Param("id")
+	userId, err := getUserIdFromContext(c)
+	if err != nil {
+		c.Error(err)
 		return
 	}
 
-	userId, ok := userIdInterface.(int)
-	if !ok {
-		c.Error(errors.New("userId in context is not an int"))
-		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
+	err = shareHandler.DeleteShare(shareId, userId)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+	c.IndentedJSON(http.StatusOK, nil)
+}
+
+func GetShares(c *gin.Context) {
+	userId, err := getUserIdFromContext(c)
+	if err != nil {
+		c.Error(err)
 		return
 	}
 
@@ -178,6 +187,19 @@ func GetShares(c *gin.Context) {
 		return
 	}
 	c.IndentedJSON(http.StatusOK, response)
+}
+
+func getUserIdFromContext(c *gin.Context) (int, error) {
+	userIdInterface, exists := c.Get("userId")
+	if !exists {
+		return -1, errors.New("userId not set in context")
+	}
+
+	userId, ok := userIdInterface.(int)
+	if !ok {
+		return -1, errors.New("userId in context is not an int")
+	}
+	return userId, nil
 }
 
 func IsPasswordProtected(c *gin.Context) {
@@ -246,8 +268,6 @@ func CreateSession(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, response)
 }
 
-// TODO: Create DELETE functionality in API
-// TODO: Hook up share deleting functionality in frontend
 // TODO: Add Toast popup to project
 // TODO: Show toast pop-up on successful delete
 // TODO: Show toast pop-up on error deleting
