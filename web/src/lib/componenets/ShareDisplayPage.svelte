@@ -22,8 +22,8 @@
 {/if}
 <textarea id="content" name="content" readonly>{share.content}</textarea>
 <div id="share-info">
-	{#if share.author}
-		<p>Created by: {share.author}</p>
+	{#if share.authorName}
+		<p>Created by: {share.authorName}</p>
 	{/if}
 
 	{#if share.expiresIn}
@@ -43,8 +43,8 @@
 
 <style>
 	p {
-		color: rgb(83, 83, 83);
-		font-size: 10pt;
+		color: rgb(65, 65, 65);
+		font-size: 12pt;
 	}
 
 	#content {

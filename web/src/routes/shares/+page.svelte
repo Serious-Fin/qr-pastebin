@@ -27,13 +27,15 @@
 			}
 		};
 	};
+
+	console.log(data.shares);
 </script>
 
 <section id="main">
 	<h1>Shareit</h1>
 	<h2>You shares</h2>
 	{#if data.shares.length === 0}
-		<p>No shares, try creating one</p>
+		<p>No shares, try creating one while logged in</p>
 	{/if}
 	{#each data.shares as share}
 		<div id="share-box">
@@ -41,6 +43,15 @@
 				<p class="title">{share.title}</p>
 			{/if}
 			<p class="content">{truncateString(share.content, 100)}</p>
+
+			<div class="additional-share-settings">
+				<p>{share.expiresIn}</p>
+				<p>{share.hideAuthor ? 'Author name hidden' : 'Author name not hidden'}</p>
+
+				{#if share.isPasswordProtected}
+					<p>Password protected</p>
+				{/if}
+			</div>
 
 			<div class="buttons">
 				<form method="POST" action="?/editShare">
@@ -72,6 +83,20 @@
 		box-shadow: 2px 2px 2px 2px rgba(0, 0, 0, 0.153);
 		border-radius: 5px;
 		padding: 20px 10px;
+	}
+
+	.additional-share-settings {
+		margin-bottom: 20px;
+		width: 100%;
+		display: flex;
+		flex-direction: column;
+		gap: 3px;
+		padding-left: 15px;
+	}
+
+	.additional-share-settings p {
+		color: rgb(65, 65, 65);
+		font-size: 12pt;
 	}
 
 	.title {

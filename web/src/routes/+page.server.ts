@@ -13,12 +13,14 @@ export const actions = {
 	createShare: async ({ request }) => {
 		const data = await request.formData();
 		const authorId = parseInt((data.get('userId') as string) ?? '-1');
+		const hideAuthor = data.get('hideAuthor') !== null;
 		const params: CreateShareRequest = {
 			title: data.get('title') as string,
 			content: data.get('content') as string,
 			expireIn: data.get('expireIn') as string,
 			password: data.get('password') as string,
-			authorId
+			authorId,
+			hideAuthor
 		};
 		let newShareId = '';
 		try {

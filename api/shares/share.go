@@ -14,12 +14,13 @@ import (
 )
 
 type Share struct {
-	Id       string    `json:"id"`
-	Content  string    `json:"content"`
-	Title    string    `json:"title,omitempty"`
-	ExpireAt time.Time `json:"expireAt,omitempty"`
-	Password string    `json:"password,omitempty"`
-	AuthorId int       `json:"author,omitempty"`
+	Id         string    `json:"id"`
+	Content    string    `json:"content"`
+	Title      string    `json:"title,omitempty"`
+	ExpireAt   time.Time `json:"expireAt,omitempty"`
+	Password   string    `json:"password,omitempty"`
+	AuthorId   int       `json:"authorId,omitempty"`
+	HideAuthor bool      `json:"hideAuthor"`
 }
 
 type GetShareResponse struct {
@@ -28,7 +29,8 @@ type GetShareResponse struct {
 	Title               string `json:"title,omitempty"`
 	ExpiresIn           string `json:"expiresIn,omitempty"`
 	IsPasswordProtected bool   `json:"isPasswordProtected,omitempty"`
-	Author              string `json:"author,omitempty"`
+	AuthorName          string `json:"authorName,omitempty"`
+	HideAuthor          bool   `json:"hideAuthor"`
 }
 
 type IsPasswordProtectedResponse struct {
@@ -36,20 +38,22 @@ type IsPasswordProtectedResponse struct {
 }
 
 type DBShare struct {
-	Id       string
-	Content  string
-	Title    sql.NullString
-	ExpireAt sql.NullTime
-	Password sql.NullString
-	AuthorId sql.NullInt32
+	Id         string
+	Content    string
+	Title      sql.NullString
+	ExpireAt   sql.NullTime
+	Password   sql.NullString
+	AuthorId   sql.NullInt32
+	HideAuthor bool
 }
 
 type CreateShareRequest struct {
-	Content  string `json:"content"`
-	Title    string `json:"title,omitempty"`
-	ExpireIn string `json:"expireIn,omitempty"`
-	Password string `json:"password,omitempty"`
-	AuthorId int32  `json:"authorId"`
+	Content    string `json:"content"`
+	Title      string `json:"title,omitempty"`
+	ExpireIn   string `json:"expireIn,omitempty"`
+	Password   string `json:"password,omitempty"`
+	AuthorId   int32  `json:"authorId"`
+	HideAuthor bool   `json:"hideAuthor"`
 }
 
 type CreateShareResponse struct {
@@ -99,12 +103,22 @@ func (handler *ShareDBHandler) GetShare(id string) (*GetShareResponse, error) {
 	return shareResponse, nil
 }
 
-func (handler *ShareDBHandler) GetShares(userId int) ([]Share, error) {
+func (handler *ShareDBHandler) GetShares(userId int) ([]GetShareResponse, error) {
 	shares, err := handler.readSharesFromDB(userId)
 	if err != nil {
 		return nil, err
 	}
-	return shares, nil
+
+	shareResponses := make([]GetShareResponse, 0)
+	for _, share := range shares {
+		newShareResponse, err := handler.createGetShareResponse(share)
+		if err != nil {
+			return nil, err
+		}
+		shareResponses = append(shareResponses, *newShareResponse)
+	}
+
+	return shareResponses, nil
 }
 
 func (handler *ShareDBHandler) GetProtectedShare(id string, password string) (*GetShareResponse, error) {
@@ -130,7 +144,7 @@ func (handler *ShareDBHandler) GetProtectedShare(id string, password string) (*G
 }
 
 func (handler *ShareDBHandler) DeleteShare(shareId string, userId int) error {
-	query := "DELETE FROM shares WHERE id = $1 AND author = $2;"
+	query := "DELETE FROM shares WHERE id = $1 AND author_id = $2;"
 	_, err := handler.DB.Exec(context.Background(), query, shareId, userId)
 	if err != nil {
 		return fmt.Errorf("couldn't delete share with id '%s' for user with id '%d': %w", shareId, userId, err)
@@ -152,7 +166,7 @@ func (handler *ShareDBHandler) IsPasswordProtected(id string) (*IsPasswordProtec
 
 func (handler *ShareDBHandler) readShareFromDB(id string) (Share, error) {
 	var dbShare DBShare
-	err := handler.DB.QueryRow(context.Background(), "SELECT id, title, content, expire_at, password, author FROM shares WHERE id = $1;", id).Scan(&dbShare.Id, &dbShare.Title, &dbShare.Content, &dbShare.ExpireAt, &dbShare.Password, &dbShare.AuthorId)
+	err := handler.DB.QueryRow(context.Background(), "SELECT id, title, content, expire_at, password, author_id, hide_author FROM shares WHERE id = $1;", id).Scan(&dbShare.Id, &dbShare.Title, &dbShare.Content, &dbShare.ExpireAt, &dbShare.Password, &dbShare.AuthorId, &dbShare.HideAuthor)
 	if err != nil {
 		return Share{}, fmt.Errorf("error getting share with id '%s': %w", id, err)
 	}
@@ -160,7 +174,7 @@ func (handler *ShareDBHandler) readShareFromDB(id string) (Share, error) {
 }
 
 func (handler *ShareDBHandler) readSharesFromDB(userId int) ([]Share, error) {
-	rows, err := handler.DB.Query(context.Background(), "SELECT s.id, s.title, s.content, s.expire_at, s.password, s.author FROM users AS u RIGHT JOIN shares AS s ON u.id = s.author WHERE u.id = $1;", userId)
+	rows, err := handler.DB.Query(context.Background(), "SELECT s.id, s.title, s.content, s.expire_at, s.password, s.author_id, s.hide_author FROM users AS u RIGHT JOIN shares AS s ON u.id = s.author_id WHERE u.id = $1;", userId)
 	if err != nil {
 		return nil, fmt.Errorf("error querying shares: %w", err)
 	}
@@ -169,7 +183,7 @@ func (handler *ShareDBHandler) readSharesFromDB(userId int) ([]Share, error) {
 	shares := make([]Share, 0)
 	for rows.Next() {
 		var dbShare DBShare
-		err := rows.Scan(&dbShare.Id, &dbShare.Title, &dbShare.Content, &dbShare.ExpireAt, &dbShare.Password, &dbShare.AuthorId)
+		err := rows.Scan(&dbShare.Id, &dbShare.Title, &dbShare.Content, &dbShare.ExpireAt, &dbShare.Password, &dbShare.AuthorId, &dbShare.HideAuthor)
 		if err != nil {
 			return nil, fmt.Errorf("error scanning share row: %w", err)
 		}
@@ -217,7 +231,8 @@ func createInsertStatement(share Share) (string, []any) {
 	colNames, args, values, argPos = tryAddColumnToQuery("content", share.Content, argPos, colNames, args, values)
 	colNames, args, values, argPos = tryAddColumnToQuery("title", share.Title, argPos, colNames, args, values)
 	colNames, args, values, argPos = tryAddColumnToQuery("expire_at", share.ExpireAt, argPos, colNames, args, values)
-	colNames, args, values, argPos = tryAddColumnToQuery("author", share.AuthorId, argPos, colNames, args, values)
+	colNames, args, values, argPos = tryAddColumnToQuery("author_id", share.AuthorId, argPos, colNames, args, values)
+	colNames, args, values, argPos = tryAddColumnToQuery("hide_author", share.HideAuthor, argPos, colNames, args, values)
 	colNames, args, values, _ = tryAddColumnToQuery("password", share.Password, argPos, colNames, args, values)
 
 	return fmt.Sprintf("INSERT INTO shares (%s) VALUES (%s);", strings.Join(colNames, ", "), strings.Join(values, ", ")), args
@@ -270,6 +285,7 @@ func convertShareFromDB(dbShare DBShare) Share {
 	var share Share
 	share.Id = dbShare.Id
 	share.Content = dbShare.Content
+	share.HideAuthor = dbShare.HideAuthor
 	if dbShare.Title.Valid {
 		share.Title = dbShare.Title.String
 	} else {
@@ -300,6 +316,7 @@ func (handler *ShareDBHandler) createGetShareResponse(share Share) (*GetShareRes
 	var shareResp GetShareResponse
 	shareResp.Id = share.Id
 	shareResp.Content = share.Content
+	shareResp.HideAuthor = share.HideAuthor
 
 	if share.Title != "" {
 		shareResp.Title = share.Title
@@ -315,7 +332,7 @@ func (handler *ShareDBHandler) createGetShareResponse(share Share) (*GetShareRes
 		if err != nil {
 			return nil, err
 		}
-		shareResp.Author = author.Name
+		shareResp.AuthorName = author.Name
 	}
 	return &shareResp, nil
 }

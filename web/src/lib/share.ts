@@ -4,6 +4,7 @@ export interface CreateShareRequest {
 	password?: string;
 	expireIn?: string;
 	authorId: number;
+	hideAuthor: boolean;
 }
 
 interface CreateShareResponse {
@@ -16,7 +17,8 @@ export interface Share {
 	title?: string;
 	expiresIn?: string;
 	isPasswordProtected?: boolean;
-	author?: string;
+	authorName?: string;
+	hideAuthor: boolean;
 }
 
 export interface GetPasswordProtectedShareRequest {

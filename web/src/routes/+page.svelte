@@ -30,6 +30,9 @@
 
 			<label for="password">Password:</label>
 			<input type="password" class="property-input" name="password" id="password" />
+
+			<label for="hideAuthor">Hide author?</label>
+			<input type="checkbox" id="hideAuthor" name="hideAuthor" />
 		</div>
 
 		<input type="hidden" id="userId" name="userId" bind:value={userId} />
@@ -88,6 +91,11 @@
 	input,
 	select {
 		padding: 3px 5px;
+	}
+
+	input[type='checkbox'] {
+		justify-self: baseline;
+		width: 20px;
 	}
 
 	input[type='submit'] {

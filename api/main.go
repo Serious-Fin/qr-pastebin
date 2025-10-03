@@ -268,8 +268,8 @@ func CreateSession(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, response)
 }
 
-// TODO: show additional information on share edit page (when it expires, is password protected)
 // TODO: add an option to hide author name on creating a share
+// TODO: add button to view share form "My shares"
 
 // TODO: add form page where user can edit share info/options
 // TODO: load up existing share data on edit page
