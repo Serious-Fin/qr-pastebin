@@ -268,8 +268,6 @@ func CreateSession(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, response)
 }
 
-// TODO: add an option to hide author name on creating a share
-
 // TODO: add form page where user can edit share info/options
 // TODO: load up existing share data on edit page
 // TODO: add API functionality to update share info

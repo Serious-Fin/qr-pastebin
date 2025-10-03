@@ -100,6 +100,11 @@ func (handler *ShareDBHandler) GetShare(id string) (*GetShareResponse, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	if shareResponse.HideAuthor {
+		shareResponse.AuthorName = ""
+	}
+
 	return shareResponse, nil
 }
 
@@ -203,6 +208,7 @@ func createNewShare(request CreateShareRequest) (*Share, error) {
 	share.Content = request.Content
 	share.Title = request.Title
 	share.AuthorId = int(request.AuthorId)
+	share.HideAuthor = request.HideAuthor
 	if request.Password != "" {
 		passwordHash, err := common.CreatePasswordHash(request.Password)
 		if err != nil {
