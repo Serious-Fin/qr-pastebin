@@ -269,7 +269,6 @@ func CreateSession(c *gin.Context) {
 }
 
 // TODO: add an option to hide author name on creating a share
-// TODO: add button to view share form "My shares"
 
 // TODO: add form page where user can edit share info/options
 // TODO: load up existing share data on edit page

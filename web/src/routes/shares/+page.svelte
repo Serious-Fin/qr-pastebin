@@ -52,6 +52,8 @@
 			</div>
 
 			<div class="buttons">
+				<button class="button" onclick={() => (window.location.href = `/${share.id}`)}>View</button>
+
 				<form method="POST" action="?/editShare">
 					<input type="hidden" id="shareId" name="shareId" value={share.id} />
 					<button class="button">Edit</button>
