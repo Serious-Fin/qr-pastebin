@@ -27,8 +27,6 @@
 			}
 		};
 	};
-
-	console.log(data.shares);
 </script>
 
 <section id="main">
