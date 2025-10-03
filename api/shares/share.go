@@ -108,6 +108,20 @@ func (handler *ShareDBHandler) GetShare(id string) (*GetShareResponse, error) {
 	return shareResponse, nil
 }
 
+func (handler *ShareDBHandler) GetShareForEdit(shareId string, userId int) (*GetShareResponse, error) {
+	share, err := handler.readShareFromDBFromUser(shareId, userId)
+	if err != nil {
+		return nil, err
+	}
+
+	shareResponse, err := handler.createGetShareResponse(share)
+	if err != nil {
+		return nil, err
+	}
+
+	return shareResponse, nil
+}
+
 func (handler *ShareDBHandler) GetShares(userId int) ([]GetShareResponse, error) {
 	shares, err := handler.readSharesFromDB(userId)
 	if err != nil {
@@ -169,11 +183,20 @@ func (handler *ShareDBHandler) IsPasswordProtected(id string) (*IsPasswordProtec
 	}
 }
 
-func (handler *ShareDBHandler) readShareFromDB(id string) (Share, error) {
+func (handler *ShareDBHandler) readShareFromDB(shareId string) (Share, error) {
 	var dbShare DBShare
-	err := handler.DB.QueryRow(context.Background(), "SELECT id, title, content, expire_at, password, author_id, hide_author FROM shares WHERE id = $1;", id).Scan(&dbShare.Id, &dbShare.Title, &dbShare.Content, &dbShare.ExpireAt, &dbShare.Password, &dbShare.AuthorId, &dbShare.HideAuthor)
+	err := handler.DB.QueryRow(context.Background(), "SELECT id, title, content, expire_at, password, author_id, hide_author FROM shares WHERE id = $1;", shareId).Scan(&dbShare.Id, &dbShare.Title, &dbShare.Content, &dbShare.ExpireAt, &dbShare.Password, &dbShare.AuthorId, &dbShare.HideAuthor)
 	if err != nil {
-		return Share{}, fmt.Errorf("error getting share with id '%s': %w", id, err)
+		return Share{}, fmt.Errorf("error getting share with id '%s': %w", shareId, err)
+	}
+	return convertShareFromDB(dbShare), nil
+}
+
+func (handler *ShareDBHandler) readShareFromDBFromUser(shareId string, userId int) (Share, error) {
+	var dbShare DBShare
+	err := handler.DB.QueryRow(context.Background(), "SELECT id, title, content, expire_at, password, author_id, hide_author FROM shares WHERE id = $1 AND author_id = $2;", shareId, userId).Scan(&dbShare.Id, &dbShare.Title, &dbShare.Content, &dbShare.ExpireAt, &dbShare.Password, &dbShare.AuthorId, &dbShare.HideAuthor)
+	if err != nil {
+		return Share{}, fmt.Errorf("error getting share with id '%s': %w", shareId, err)
 	}
 	return convertShareFromDB(dbShare), nil
 }

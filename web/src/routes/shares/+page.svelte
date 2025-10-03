@@ -54,10 +54,9 @@
 			<div class="buttons">
 				<button class="button" onclick={() => (window.location.href = `/${share.id}`)}>View</button>
 
-				<form method="POST" action="?/editShare">
-					<input type="hidden" id="shareId" name="shareId" value={share.id} />
-					<button class="button">Edit</button>
-				</form>
+				<button class="button" onclick={() => (window.location.href = `/shares/edit/${share.id}`)}
+					>Edit</button
+				>
 
 				<form method="POST" action="?/deleteShare" use:enhance={handleDeleteSubmissionError}>
 					{#if isLoadingDelete}

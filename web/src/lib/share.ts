@@ -82,6 +82,28 @@ export async function getShare(id: string): Promise<Share> {
 	}
 }
 
+export async function getShareForEdit(id: string, sessionId: string): Promise<Share> {
+	try {
+		const response = await fetch(`http://localhost:8080/share/${id}/edit`, {
+			headers: {
+				Authorization: `Bearer ${sessionId}`
+			}
+		});
+		if (!response.ok) {
+			const errorBody = await response.json().catch(() => ({ message: response.statusText }));
+			throw new Error(
+				`Error getting share ${response.status} - ${errorBody.message || 'Unknown error'}`
+			);
+		}
+		return await response.json();
+	} catch (err) {
+		if (err instanceof Error) {
+			throw Error(`Could not call get share endpoint: ${JSON.stringify(err.message)}`);
+		}
+		throw new Error(`Unknown error while getting share: ${JSON.stringify(err)}`);
+	}
+}
+
 export async function isSharePasswordProtected(id: string): Promise<boolean> {
 	try {
 		const response = await fetch(`http://localhost:8080/share/${id}/protected`);

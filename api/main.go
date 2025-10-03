@@ -121,6 +121,7 @@ func main() {
 	{
 		api.GET("/shares", GetShares)
 		api.DELETE("/share/:id", DeleteShare)
+		api.GET("/share/:id/edit", GetShareForEdit)
 	}
 
 	router.POST("/share", CreateShare)
@@ -151,6 +152,22 @@ func CreateShare(c *gin.Context) {
 func GetShare(c *gin.Context) {
 	shareId := c.Param("id")
 	response, err := shareHandler.GetShare(shareId)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+	c.IndentedJSON(http.StatusOK, response)
+}
+
+func GetShareForEdit(c *gin.Context) {
+	shareId := c.Param("id")
+	userId, err := getUserIdFromContext(c)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	response, err := shareHandler.GetShareForEdit(shareId, userId)
 	if err != nil {
 		c.Error(err)
 		return
@@ -268,8 +285,6 @@ func CreateSession(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, response)
 }
 
-// TODO: add form page where user can edit share info/options
-// TODO: load up existing share data on edit page
 // TODO: add API functionality to update share info
 // TODO: hook up "save edit" button to submit changes to API
 // TODO: add toast message on success or failure
