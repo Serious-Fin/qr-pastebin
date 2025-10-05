@@ -321,5 +321,8 @@ func CreateSession(c *gin.Context) {
 // TODO: add logging to discord of errors
 // TODO: clean up WEB code
 
+// TODO: add tablet styling
+// TODO: add desktop styling
+
 // TODO: host via docker
 // TODO: setup HTTPS
