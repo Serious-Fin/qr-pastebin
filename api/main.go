@@ -122,6 +122,7 @@ func main() {
 		api.GET("/shares", GetShares)
 		api.DELETE("/share/:id", DeleteShare)
 		api.GET("/share/:id/edit", GetShareForEdit)
+		api.PATCH("/share/:id/edit", UpdateShare)
 	}
 
 	router.POST("/share", CreateShare)
@@ -173,6 +174,28 @@ func GetShareForEdit(c *gin.Context) {
 		return
 	}
 	c.IndentedJSON(http.StatusOK, response)
+}
+
+func UpdateShare(c *gin.Context) {
+	shareId := c.Param("id")
+	userId, err := getUserIdFromContext(c)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	var body shares.CreateShareRequest
+	if err := c.ShouldBind(&body); err != nil {
+		c.Error(err)
+		return
+	}
+
+	err = shareHandler.UpdateShare(shareId, userId, body)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+	c.IndentedJSON(http.StatusOK, nil)
 }
 
 func DeleteShare(c *gin.Context) {

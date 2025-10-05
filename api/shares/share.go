@@ -60,6 +60,15 @@ type CreateShareResponse struct {
 	ShareId string `json:"id"`
 }
 
+type EditShareRequest struct {
+	Title       string `json:"title"`
+	Content     string `json:"content"`
+	SetPassword bool   `json:"setPassword"`
+	Password    string `json:"password"`
+	ExpireIn    string `json:"expireIn"`
+	HideAuthor  bool   `json:"hideAuthor"`
+}
+
 type GetProtectedShareRequest struct {
 	Password string `json:"password"`
 }
@@ -120,6 +129,65 @@ func (handler *ShareDBHandler) GetShareForEdit(shareId string, userId int) (*Get
 	}
 
 	return shareResponse, nil
+}
+
+func (handler *ShareDBHandler) UpdateShare(shareId string, userId int, shareBody EditShareRequest) error {
+	colNames := make([]string, 0)
+	values := make([]string, 0)
+	args := make([]interface{}, 0)
+	argCount := 1
+
+	colNames = append(colNames, "title")
+	values = append(values, fmt.Sprintf("$%d", argCount))
+	args = append(args, shareBody.Title)
+	argCount++
+
+	colNames = append(colNames, "content")
+	values = append(values, fmt.Sprintf("$%d", argCount))
+	args = append(args, shareBody.Content)
+	argCount++
+
+	if shareBody.SetPassword {
+		passwordHash, err := common.CreatePasswordHash(shareBody.Password)
+		if err != nil {
+			return err
+		}
+		colNames = append(colNames, "password")
+		values = append(values, fmt.Sprintf("$%d", argCount))
+		args = append(args, passwordHash)
+		argCount++
+	}
+
+	if shareBody.ExpireIn != "no-change" {
+		expirationDate, err := createExpirationDate(shareBody.ExpireIn)
+		if err != nil {
+			return err
+		}
+		colNames = append(colNames, "expire_at")
+		values = append(values, fmt.Sprintf("$%d", argCount))
+		args = append(args, expirationDate)
+		argCount++
+	}
+
+	colNames = append(colNames, "hide_author")
+	values = append(values, fmt.Sprintf("$%d", argCount))
+	args = append(args, shareBody.HideAuthor)
+	argCount++
+
+	colNamesString := strings.Join(colNames, ", ")
+	valueIndexString := strings.Join(values, ", ")
+
+	shareIdIndex := fmt.Sprintf("$%d", argCount)
+	args = append(args, shareId)
+	argCount++
+
+	authorIdIndex := fmt.Sprintf("$%d", argCount)
+	args = append(args, userId)
+	argCount++
+
+	query := fmt.Sprintf("UPDATE shares SET (%s) VALUES (%s) WHERE id = %s AND author_id = %s;", colNamesString, valueIndexString, shareIdIndex, authorIdIndex)
+	_, err := handler.DB.Exec(context.Background(), query, args...)
+	return err
 }
 
 func (handler *ShareDBHandler) GetShares(userId int) ([]GetShareResponse, error) {
