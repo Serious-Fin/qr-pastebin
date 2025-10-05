@@ -184,7 +184,7 @@ func UpdateShare(c *gin.Context) {
 		return
 	}
 
-	var body shares.CreateShareRequest
+	var body shares.EditShareRequest
 	if err := c.ShouldBind(&body); err != nil {
 		c.Error(err)
 		return
@@ -307,10 +307,6 @@ func CreateSession(c *gin.Context) {
 	}
 	c.IndentedJSON(http.StatusOK, response)
 }
-
-// TODO: add API functionality to update share info
-// TODO: hook up "save edit" button to submit changes to API
-// TODO: add toast message on success or failure
 
 // TODO: add user roles (user/admin)
 // TODO: if user is admin, he has a "delete share" button

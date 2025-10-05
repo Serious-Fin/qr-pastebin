@@ -132,30 +132,33 @@ func (handler *ShareDBHandler) GetShareForEdit(shareId string, userId int) (*Get
 }
 
 func (handler *ShareDBHandler) UpdateShare(shareId string, userId int, shareBody EditShareRequest) error {
-	colNames := make([]string, 0)
-	values := make([]string, 0)
+	setParts := make([]string, 0)
 	args := make([]interface{}, 0)
 	argCount := 1
 
-	colNames = append(colNames, "title")
-	values = append(values, fmt.Sprintf("$%d", argCount))
+	setParts = append(setParts, fmt.Sprintf("%s = $%d", "title", argCount))
 	args = append(args, shareBody.Title)
 	argCount++
 
-	colNames = append(colNames, "content")
-	values = append(values, fmt.Sprintf("$%d", argCount))
+	setParts = append(setParts, fmt.Sprintf("%s = $%d", "content", argCount))
 	args = append(args, shareBody.Content)
 	argCount++
 
 	if shareBody.SetPassword {
-		passwordHash, err := common.CreatePasswordHash(shareBody.Password)
-		if err != nil {
-			return err
+		if shareBody.Password == "" {
+			setParts = append(setParts, fmt.Sprintf("%s = $%d", "password", argCount))
+			args = append(args, "")
+			argCount++
+		} else {
+			passwordHash, err := common.CreatePasswordHash(shareBody.Password)
+			if err != nil {
+				return err
+			}
+			setParts = append(setParts, fmt.Sprintf("%s = $%d", "password", argCount))
+			args = append(args, passwordHash)
+			argCount++
 		}
-		colNames = append(colNames, "password")
-		values = append(values, fmt.Sprintf("$%d", argCount))
-		args = append(args, passwordHash)
-		argCount++
+
 	}
 
 	if shareBody.ExpireIn != "no-change" {
@@ -163,19 +166,15 @@ func (handler *ShareDBHandler) UpdateShare(shareId string, userId int, shareBody
 		if err != nil {
 			return err
 		}
-		colNames = append(colNames, "expire_at")
-		values = append(values, fmt.Sprintf("$%d", argCount))
+		setParts = append(setParts, fmt.Sprintf("%s = $%d", "expire_at", argCount))
 		args = append(args, expirationDate)
 		argCount++
 	}
-
-	colNames = append(colNames, "hide_author")
-	values = append(values, fmt.Sprintf("$%d", argCount))
+	setParts = append(setParts, fmt.Sprintf("%s = $%d", "hide_author", argCount))
 	args = append(args, shareBody.HideAuthor)
 	argCount++
 
-	colNamesString := strings.Join(colNames, ", ")
-	valueIndexString := strings.Join(values, ", ")
+	setQueryPart := strings.Join(setParts, ", ")
 
 	shareIdIndex := fmt.Sprintf("$%d", argCount)
 	args = append(args, shareId)
@@ -185,7 +184,7 @@ func (handler *ShareDBHandler) UpdateShare(shareId string, userId int, shareBody
 	args = append(args, userId)
 	argCount++
 
-	query := fmt.Sprintf("UPDATE shares SET (%s) VALUES (%s) WHERE id = %s AND author_id = %s;", colNamesString, valueIndexString, shareIdIndex, authorIdIndex)
+	query := fmt.Sprintf("UPDATE shares SET %s WHERE id = %s AND author_id = %s;", setQueryPart, shareIdIndex, authorIdIndex)
 	_, err := handler.DB.Exec(context.Background(), query, args...)
 	return err
 }
@@ -226,6 +225,10 @@ func (handler *ShareDBHandler) GetProtectedShare(id string, password string) (*G
 	shareResponse, err := handler.createGetShareResponse(share)
 	if err != nil {
 		return nil, err
+	}
+
+	if shareResponse.HideAuthor {
+		shareResponse.AuthorName = ""
 	}
 	return shareResponse, nil
 }

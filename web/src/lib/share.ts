@@ -7,6 +7,15 @@ export interface CreateShareRequest {
 	hideAuthor: boolean;
 }
 
+export interface EditShareRequest {
+	title: string;
+	content: string;
+	setPassword: boolean;
+	password: string;
+	expireIn: string;
+	hideAuthor: boolean;
+}
+
 interface CreateShareResponse {
 	id: string;
 }
@@ -199,5 +208,33 @@ export async function deleteShare(shareId: string, sessionId: string): Promise<v
 			throw Error(`Could not call delete share endpoint: ${JSON.stringify(err.message)}`);
 		}
 		throw new Error(`Unknown error while deleting share: ${JSON.stringify(err)}`);
+	}
+}
+
+export async function editShare(
+	request: EditShareRequest,
+	sessionId: string,
+	shareId: string
+): Promise<void> {
+	try {
+		const response = await fetch(`http://localhost:8080/share/${shareId}/edit`, {
+			body: JSON.stringify(request),
+			headers: {
+				'Content-Type': 'application/json',
+				Authorization: `Bearer ${sessionId}`
+			},
+			method: 'PATCH'
+		});
+		if (!response.ok) {
+			const errorBody = await response.json().catch(() => ({ message: response.statusText }));
+			throw new Error(
+				`Error editing share ${response.status} - ${errorBody.message || 'Unknown error'}`
+			);
+		}
+	} catch (err) {
+		if (err instanceof Error) {
+			throw Error(`Could not call edit share endpoint: ${JSON.stringify(err.message)}`);
+		}
+		throw new Error(`Unknown error while editing share: ${JSON.stringify(err)}`);
 	}
 }

@@ -1,15 +1,44 @@
 <script lang="ts">
 	import type { PageProps } from './$types';
+	import { enhance } from '$app/forms';
+	import type { SubmitFunction } from '@sveltejs/kit';
+	import { logError, logSuccess, truncateString } from '$lib/helpers';
 	let { data }: PageProps = $props();
-	let userId = $state(data.userId);
 	let share = $state(data.share);
+	let setPassword = $state(false);
+	let isLoading = $state(false);
+
+	const handleEditSubmissionError: SubmitFunction = () => {
+		return async ({ update, result }) => {
+			isLoading = true;
+			try {
+				await update();
+				if (result.type === 'success') {
+					logSuccess('Share updated');
+					window.location.href = `/shares/edit/${share.id}`;
+				} else if (result.type === 'failure') {
+					throw Error(result.data?.message || 'Unknown server error occurred');
+				}
+			} catch (err) {
+				if (err instanceof Error) {
+					logError('Error editing share, try again later', err);
+				}
+			} finally {
+				isLoading = false;
+			}
+		};
+	};
 </script>
 
 <section id="main">
 	<h1>Shareit</h1>
 	<h2>Edit share</h2>
-	<form method="POST" action="?/createShare">
+	<form method="POST" action="?/editShare" use:enhance={handleEditSubmissionError}>
 		<textarea id="content" name="content" required>{share.content}</textarea>
+
+		<div class="additional-share-settings">
+			<p>{share.expiresIn}</p>
+		</div>
 
 		<div id="grid">
 			<label for="title">Title:</label>
@@ -30,20 +59,24 @@
 				<option value="1_years">1 year</option>
 			</select>
 
+			<label for="setPassword">Change password?</label>
+			<input type="checkbox" id="setPassword" name="setPassword" bind:checked={setPassword} />
+
 			<label for="password">New password:</label>
 			<input
 				type="password"
 				class="property-input"
 				name="password"
 				id="password"
-				placeholder="Leave blank for no change"
+				placeholder="Leave empty for no password"
+				disabled={!setPassword}
 			/>
 
 			<label for="hideAuthor">Hide author?</label>
 			<input type="checkbox" id="hideAuthor" name="hideAuthor" bind:checked={share.hideAuthor} />
 		</div>
 
-		<input type="hidden" id="userId" name="userId" bind:value={userId} />
+		<input type="hidden" id="shareId" name="shareId" bind:value={share.id} />
 
 		<input type="submit" value="Save changes" />
 	</form>
@@ -120,5 +153,19 @@
 	input[type='submit']:active {
 		box-shadow: 1px 1px 1px 1px rgba(0, 0, 0, 0.199);
 		transform: translateY(2px);
+	}
+
+	.additional-share-settings {
+		margin-bottom: 40px;
+		width: 100%;
+		display: flex;
+		flex-direction: column;
+		gap: 3px;
+		padding-left: 15px;
+	}
+
+	.additional-share-settings p {
+		color: rgb(65, 65, 65);
+		font-size: 12pt;
 	}
 </style>
