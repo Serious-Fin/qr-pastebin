@@ -1,32 +1,42 @@
--- public.shares definition
+-- Table: public.shares
 
--- Drop table
+-- DROP TABLE IF EXISTS public.shares;
 
--- DROP TABLE public.shares;
+CREATE TABLE IF NOT EXISTS public.shares
+(
+    id character varying COLLATE pg_catalog."default" NOT NULL,
+    title character varying COLLATE pg_catalog."default",
+    content character varying COLLATE pg_catalog."default",
+    password character varying COLLATE pg_catalog."default",
+    expire_at timestamp with time zone,
+    author_id integer,
+    hide_author boolean NOT NULL DEFAULT false,
+    CONSTRAINT shares_pk PRIMARY KEY (id)
+)
 
-CREATE TABLE public.shares (
-	id varchar NOT NULL,
-	title varchar NULL,
-	"content" varchar NULL,
-	"password" varchar NULL,
-	expire_at timestamptz NULL,
-	author int4 NULL,
-	CONSTRAINT shares_pk PRIMARY KEY (id)
-);
+TABLESPACE pg_default;
+
+ALTER TABLE IF EXISTS public.shares
+    OWNER to postgres;
 
 
--- public.users definition
+-- Table: public.users
 
--- Drop table
+-- DROP TABLE IF EXISTS public.users;
 
--- DROP TABLE public.users;
+CREATE TABLE IF NOT EXISTS public.users
+(
+    id integer NOT NULL,
+    name character varying COLLATE pg_catalog."default" NOT NULL,
+    password character varying COLLATE pg_catalog."default" NOT NULL,
+    role integer NOT NULL DEFAULT 0,
+    CONSTRAINT users_pk PRIMARY KEY (id)
+)
 
-CREATE TABLE public.users (
-	id int4 NOT NULL,
-	"name" varchar NOT NULL,
-	"password" varchar NOT NULL,
-	CONSTRAINT users_pk PRIMARY KEY (id)
-);
+TABLESPACE pg_default;
+
+ALTER TABLE IF EXISTS public.users
+    OWNER to postgres;
 
 -- Table: public.sessions
 
@@ -35,7 +45,7 @@ CREATE TABLE public.users (
 CREATE TABLE IF NOT EXISTS public.sessions
 (
     session_id text COLLATE pg_catalog."default" NOT NULL,
-    user_id int4 NOT NULL,
+    user_id integer NOT NULL,
     expire_at timestamp with time zone NOT NULL
 )
 
