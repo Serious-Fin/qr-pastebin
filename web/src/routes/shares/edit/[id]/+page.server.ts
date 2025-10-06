@@ -23,7 +23,7 @@ export const actions: Actions = {
 			setPassword: data.get('setPassword') !== null,
 			password: data.get('password') as string,
 			expireIn: data.get('expireIn') as string,
-			hideAuthor: data.get('shareId') !== null
+			hideAuthor: data.get('hideAuthor') !== null
 		};
 
 		try {
