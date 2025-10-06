@@ -10,18 +10,13 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-type UserData struct {
+type UserCredentials struct {
 	Name     string `json:"name"`
 	Password string `json:"password"`
 }
 
-type CreateSessionResponse struct {
+type SessionData struct {
 	SessionId string `json:"sessionId"`
-}
-
-type Session struct {
-	UserId    int
-	SessionId string
 }
 
 type UserDBHandler struct {
@@ -32,7 +27,7 @@ func NewUserHandler(db *pgx.Conn) *UserDBHandler {
 	return &UserDBHandler{DB: db}
 }
 
-func (handler *UserDBHandler) CreateUser(request UserData) error {
+func (handler *UserDBHandler) CreateUser(request UserCredentials) error {
 	_, err := common.GetUserByName(handler.DB, request.Name)
 	if err == nil {
 		return &UserAlreadyExistsError{}
@@ -42,16 +37,16 @@ func (handler *UserDBHandler) CreateUser(request UserData) error {
 	if err != nil {
 		return err
 	}
-	query := "INSERT INTO users (id, name, password) VALUES ($1, $2, $3);"
+	query := "INSERT INTO users (id, name, password, role) VALUES ($1, $2, $3, $4);"
 
-	_, err = handler.DB.Exec(context.Background(), query, rand.Intn(10000), request.Name, hashedPassword)
+	_, err = handler.DB.Exec(context.Background(), query, rand.Intn(10000), request.Name, hashedPassword, 0)
 	if err != nil {
-		return fmt.Errorf("couldn't create new user: %w", err)
+		return fmt.Errorf("error creating new user: %w", err)
 	}
 	return nil
 }
 
-func (handler *UserDBHandler) CreateSession(request UserData) (*CreateSessionResponse, error) {
+func (handler *UserDBHandler) CreateSession(request UserCredentials) (*SessionData, error) {
 	user, err := common.GetUserByName(handler.DB, request.Name)
 	if err != nil {
 		return nil, &WrongPasswordError{}
@@ -65,10 +60,9 @@ func (handler *UserDBHandler) CreateSession(request UserData) (*CreateSessionRes
 	// Try get active session for this user
 	sessionId, err := handler.getActiveSession(user.Id)
 	if err == nil {
-		fmt.Println("Found active session for user " + user.Name)
-		return &CreateSessionResponse{SessionId: sessionId}, nil
+		return &SessionData{SessionId: sessionId}, nil
 	}
-	fmt.Println("No active session for user " + user.Name)
+
 	// If no active session, then clean all expired sessions
 	err = handler.deleteSessions(user.Id)
 	if err != nil {
@@ -80,7 +74,7 @@ func (handler *UserDBHandler) CreateSession(request UserData) (*CreateSessionRes
 	if err != nil {
 		return nil, err
 	}
-	return &CreateSessionResponse{SessionId: sessionId}, nil
+	return &SessionData{SessionId: sessionId}, nil
 }
 
 func (handler *UserDBHandler) GetUserFromSession(sessionId string) (*common.User, error) {
@@ -93,7 +87,11 @@ func (handler *UserDBHandler) GetUserFromSession(sessionId string) (*common.User
 }
 
 func (handler *UserDBHandler) getActiveSession(userId int) (string, error) {
-	var session Session
+	var session struct {
+		UserId    int
+		SessionId string
+	}
+
 	err := handler.DB.QueryRow(context.Background(), "SELECT session_id FROM sessions WHERE user_id = $1 AND expire_at > $2;", userId, time.Now()).Scan(&session.SessionId)
 	if err != nil {
 		return "", fmt.Errorf("error getting session with user id '%d': %w", userId, err)
@@ -118,12 +116,4 @@ func (handler *UserDBHandler) createNewSession(userId int) (string, error) {
 		return "", fmt.Errorf("couldn't create new session: %w", err)
 	}
 	return sessionId, nil
-}
-
-func (handler *UserDBHandler) ValidateSession(sessionID string) (*common.User, error) {
-	user, err := handler.GetUserFromSession(sessionID)
-	if err != nil {
-		return nil, err
-	}
-	return user, nil
 }

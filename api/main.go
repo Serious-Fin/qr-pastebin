@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"net/http"
@@ -61,6 +62,11 @@ func ErrorHandlerMiddleware() gin.HandlerFunc {
 				message = wrongNameOrPassErr.Error()
 			}
 
+			if errors.Is(err, sql.ErrNoRows) {
+				statusCode = http.StatusNotFound
+				message = "Resource not found"
+			}
+
 			sendError(c, statusCode, message, err)
 		}
 	}
@@ -82,7 +88,7 @@ func AuthMiddleware() gin.HandlerFunc {
 
 		sessionId := parts[1]
 
-		user, err := userHandler.ValidateSession(sessionId)
+		user, err := userHandler.GetUserFromSession(sessionId)
 		if err != nil {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": fmt.Sprintf("Invalid session token. %s", err)})
 			return
@@ -299,7 +305,7 @@ func GetProtectedShare(c *gin.Context) {
 }
 
 func CreateUser(c *gin.Context) {
-	var body users.UserData
+	var body users.UserCredentials
 	if err := c.ShouldBind(&body); err != nil {
 		c.Error(err)
 		return
@@ -324,7 +330,7 @@ func GetUser(c *gin.Context) {
 }
 
 func CreateSession(c *gin.Context) {
-	var body users.UserData
+	var body users.UserCredentials
 	if err := c.ShouldBind(&body); err != nil {
 		c.Error(err)
 		return
