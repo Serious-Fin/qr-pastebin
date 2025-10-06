@@ -1,57 +1,88 @@
 import type { PageServerLoad } from './$types';
-import { getShare, isSharePasswordProtected, FetchShareStatus, type Share, type GetPasswordProtectedShareRequest, getPasswordProtectedShare, WrongPasswordError } from '$lib/share';
+import {
+	getShare,
+	isSharePasswordProtected,
+	FetchShareStatus,
+	type Share,
+	type GetPasswordProtectedShareRequest,
+	getPasswordProtectedShare,
+	WrongPasswordError,
+	deleteShare
+} from '$lib/share';
 import { fail } from '@sveltejs/kit';
 
-export const load: PageServerLoad = async ({ params }) => {
-	// Load "Enter password" view if share is password protected
-	let hasPassword: boolean
+export const load: PageServerLoad = async ({ params, locals }) => {
+	// Check the role of viewing user
+	const role = locals.user?.role;
+	let isAdmin = false;
+	if (role && role === 1) {
+		isAdmin = true;
+	}
+
+	// Load "Enter password" view if share is password protected (except if user is admin)
+	let hasPassword: boolean;
 	try {
-		hasPassword = await isSharePasswordProtected(params.id)
+		hasPassword = await isSharePasswordProtected(params.id);
 	} catch {
 		return {
 			status: FetchShareStatus.NotFound
-		}
+		};
 	}
-	if (hasPassword) {
+	if (!isAdmin && hasPassword) {
 		return {
 			status: FetchShareStatus.NeedPassword
-		}
+		};
 	}
 
 	// GET share if it's not password protected
-	let share: Share
+	let share: Share;
 	try {
-		share = await getShare(params.id)
+		share = await getShare(params.id);
 	} catch {
 		return {
 			status: FetchShareStatus.NotFound
-		}
+		};
 	}
 	return {
 		share: share,
-		status: FetchShareStatus.Accessible
+		status: FetchShareStatus.Accessible,
+		isAdmin
 	};
 };
 
 export const actions = {
 	getPasswordProtectedShare: async ({ request }) => {
 		const data = await request.formData();
-		let id = data.get("id") as string
-		id = id.substring(1)
+		let id = data.get('id') as string;
+		id = id.substring(1);
 		const params: GetPasswordProtectedShareRequest = {
 			password: data.get('password') as string
 		};
-		let share: Share
+		let share: Share;
 		try {
 			share = await getPasswordProtectedShare(id, params);
 		} catch (err) {
 			if (err instanceof WrongPasswordError) {
-				return {errMsg: err.message}
+				return { errMsg: err.message };
 			}
 			return fail(500, {
 				message: err instanceof Error ? err.message : 'Unknown error'
 			});
 		}
-		return {share}
+		return { share };
+	},
+	deleteShare: async ({ request, locals }) => {
+		const data = await request.formData();
+		const shareId = data.get('shareId') as string;
+		const sessionId = locals.sessionId ?? '';
+
+		try {
+			await deleteShare(shareId, sessionId);
+		} catch (err) {
+			if (err instanceof Error) {
+				return fail(400, { message: err.message });
+			}
+			return fail(500, { message: 'Unexpected server error' });
+		}
 	}
 };

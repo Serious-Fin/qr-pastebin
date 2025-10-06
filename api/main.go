@@ -8,6 +8,7 @@ import (
 	"os"
 	"strings"
 
+	"qr-pastebin-api/common"
 	"qr-pastebin-api/shares"
 	"qr-pastebin-api/users"
 
@@ -88,6 +89,7 @@ func AuthMiddleware() gin.HandlerFunc {
 		}
 
 		c.Set("userId", user.Id)
+		c.Set("userRole", user.Role)
 
 		c.Next()
 	}
@@ -205,8 +207,23 @@ func DeleteShare(c *gin.Context) {
 		c.Error(err)
 		return
 	}
+	userRole, err := getUserRoleFromContext(c)
+	if err != nil {
+		c.Error(err)
+		return
+	}
 
-	err = shareHandler.DeleteShare(shareId, userId)
+	permit, err := shareHandler.HasAccessToShare(userId, shareId, userRole)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	if !permit {
+		c.IndentedJSON(http.StatusUnauthorized, nil)
+	}
+
+	err = shareHandler.DeleteShare(shareId)
 	if err != nil {
 		c.Error(err)
 		return
@@ -240,6 +257,19 @@ func getUserIdFromContext(c *gin.Context) (int, error) {
 		return -1, errors.New("userId in context is not an int")
 	}
 	return userId, nil
+}
+
+func getUserRoleFromContext(c *gin.Context) (common.Role, error) {
+	userIdInterface, exists := c.Get("userRole")
+	if !exists {
+		return -1, errors.New("userRole not set in context")
+	}
+
+	userRole, ok := userIdInterface.(common.Role)
+	if !ok {
+		return -1, errors.New("userRole in context is not an int")
+	}
+	return userRole, nil
 }
 
 func IsPasswordProtected(c *gin.Context) {
@@ -307,9 +337,6 @@ func CreateSession(c *gin.Context) {
 	}
 	c.IndentedJSON(http.StatusOK, response)
 }
-
-// TODO: add user roles (user/admin)
-// TODO: if user is admin, he has a "delete share" button
 
 // TODO: clean up objects in API (seems like I have 5 different User objects, 5 different share objects)
 // TODO: clean up error handling in API

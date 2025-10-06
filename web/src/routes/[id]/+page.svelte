@@ -9,6 +9,7 @@
 	let { data }: PageProps = $props();
 	let share = $state(data.share);
 	let status = $state(data.status);
+	let isAdmin = data.isAdmin ?? false;
 
 	const updateShare = (newShare: Share, newStatus: FetchShareStatus) => {
 		share = newShare;
@@ -19,7 +20,7 @@
 <section id="main">
 	<h1>Shareit</h1>
 	{#if status === FetchShareStatus.Accessible && share}
-		<ShareDisplayPage {share} />
+		<ShareDisplayPage {isAdmin} {share} />
 	{:else if status === FetchShareStatus.NotFound}
 		<ShareNotFound />
 	{:else if status === FetchShareStatus.NeedPassword}

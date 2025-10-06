@@ -7,6 +7,7 @@ export interface UserWithId {
 	id: number;
 	name: string;
 	password: string;
+	role: number;
 }
 
 export class UserAlreadyExistsError extends Error {

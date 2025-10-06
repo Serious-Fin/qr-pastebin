@@ -3,9 +3,35 @@
 	import { onMount } from 'svelte';
 	import { page } from '$app/state';
 	import type { Share } from '$lib/share';
+	import LoadingSpinner from './LoadingSpinner.svelte';
+	import { enhance } from '$app/forms';
+	import type { SubmitFunction } from '@sveltejs/kit';
+	import { logError, logSuccess } from '$lib/helpers';
 
-	let { share }: { share: Share } = $props();
+	let { share, isAdmin }: { share: Share; isAdmin: boolean } = $props();
 	let svg: string = $state('');
+	let isLoading = $state(false);
+
+	const handleDeleteSubmissionError: SubmitFunction = () => {
+		return async ({ update, result }) => {
+			isLoading = true;
+			try {
+				await update();
+				if (result.type === 'success') {
+					logSuccess('Share deleted');
+					window.location.href = `/${share.id}`;
+				} else if (result.type === 'failure') {
+					throw Error(result.data?.message || 'Unknown server error occurred');
+				}
+			} catch (err) {
+				if (err instanceof Error) {
+					logError('Error deleting share, try again later', err);
+				}
+			} finally {
+				isLoading = false;
+			}
+		};
+	};
 
 	onMount(async () => {
 		svg = await QRCode.toString(page.url.href, {
@@ -41,6 +67,17 @@
 
 <div class="qr">{@html svg}</div>
 
+{#if isAdmin}
+	<form method="POST" action="?/deleteShare" use:enhance={handleDeleteSubmissionError}>
+		{#if isLoading}
+			<LoadingSpinner />
+		{:else}
+			<input type="hidden" id="shareId" name="shareId" value={share.id} />
+			<input type="submit" value="Delete" class="button delete" />
+		{/if}
+	</form>
+{/if}
+
 <style>
 	p {
 		color: rgb(65, 65, 65);
@@ -73,5 +110,25 @@
 		height: fit-content;
 		display: flex;
 		justify-content: center;
+	}
+
+	.button {
+		padding: 10px 20px;
+		font-size: 12pt;
+		background-color: var(--accent);
+		border: none;
+		border-radius: 10px;
+		box-shadow: 2px 2px 2px 2px rgba(0, 0, 0, 0.2);
+		width: fit-content;
+	}
+
+	.delete {
+		background-color: var(--red);
+		margin-top: 30px;
+	}
+
+	.button:active {
+		box-shadow: 1px 1px 1px 1px rgba(0, 0, 0, 0.2);
+		transform: translateY(2px);
 	}
 </style>

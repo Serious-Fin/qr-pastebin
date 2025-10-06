@@ -233,13 +233,32 @@ func (handler *ShareDBHandler) GetProtectedShare(id string, password string) (*G
 	return shareResponse, nil
 }
 
-func (handler *ShareDBHandler) DeleteShare(shareId string, userId int) error {
-	query := "DELETE FROM shares WHERE id = $1 AND author_id = $2;"
-	_, err := handler.DB.Exec(context.Background(), query, shareId, userId)
+func (handler *ShareDBHandler) DeleteShare(shareId string) error {
+	query := "DELETE FROM shares WHERE id = $1;"
+	_, err := handler.DB.Exec(context.Background(), query, shareId)
 	if err != nil {
-		return fmt.Errorf("couldn't delete share with id '%s' for user with id '%d': %w", shareId, userId, err)
+		return fmt.Errorf("couldn't delete share with id '%s': %w", shareId, err)
 	}
 	return nil
+}
+
+func (handler *ShareDBHandler) HasAccessToShare(userId int, shareId string, role common.Role) (bool, error) {
+	if role.String() == "admin" {
+		return true, nil
+	}
+
+	var count int
+	query := "SELECT COUNT(*) FROM shares WHERE author_id = $1 AND id = $2;"
+	err := handler.DB.QueryRow(context.Background(), query, userId, shareId).Scan(&count)
+	if err != nil {
+		return false, fmt.Errorf("error getting permission for share id '%s' for user with id '%d': %w", shareId, userId, err)
+	}
+
+	if count == 1 {
+		return true, nil
+	} else {
+		return false, nil
+	}
 }
 
 func (handler *ShareDBHandler) IsPasswordProtected(id string) (*IsPasswordProtectedResponse, error) {
