@@ -2,7 +2,6 @@ package shares
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"qr-pastebin-api/common"
 	"strconv"
@@ -254,7 +253,7 @@ func (handler *ShareDBHandler) GetProtectedShare(id string, password string) (*S
 	}
 
 	if !share.ExpireAt.IsZero() && time.Now().After(share.ExpireAt) {
-		return nil, errors.New("trying to access expired share")
+		return nil, &ExpiredShareError{}
 	}
 
 	passwordOk := common.IsPasswordCorrect(share.PasswordHash, password)
@@ -277,7 +276,7 @@ func (handler *ShareDBHandler) DeleteShare(shareId string) error {
 	query := "DELETE FROM shares WHERE id = $1;"
 	_, err := handler.DB.Exec(context.Background(), query, shareId)
 	if err != nil {
-		return fmt.Errorf("couldn't delete share with id '%s': %w", shareId, err)
+		return err
 	}
 	return nil
 }
@@ -291,7 +290,7 @@ func (handler *ShareDBHandler) HasAccessToShare(userId int, shareId string, role
 	query := "SELECT COUNT(*) FROM shares WHERE author_id = $1 AND id = $2;"
 	err := handler.DB.QueryRow(context.Background(), query, userId, shareId).Scan(&count)
 	if err != nil {
-		return false, fmt.Errorf("error getting permission for share id '%s' for user with id '%d': %w", shareId, userId, err)
+		return false, err
 	}
 
 	if count == 1 {
@@ -317,7 +316,7 @@ func (handler *ShareDBHandler) readShare(shareId string) (*Share, error) {
 	var share Share
 	err := handler.DB.QueryRow(context.Background(), "SELECT id, title, content, expire_at, password, author_id, hide_author FROM shares WHERE id = $1;", shareId).Scan(&share.Id, &share.Title, &share.Content, &share.ExpireAt, &share.PasswordHash, &share.AuthorId, &share.HideAuthor)
 	if err != nil {
-		return nil, fmt.Errorf("error getting share with id '%s': %w", shareId, err)
+		return nil, err
 	}
 	return &share, nil
 }
@@ -334,7 +333,7 @@ func (handler *ShareDBHandler) readShares(userId int) ([]Share, error) {
 		var share Share
 		err := rows.Scan(&share.Id, &share.Title, &share.Content, &share.ExpireAt, &share.PasswordHash, &share.AuthorId, &share.HideAuthor)
 		if err != nil {
-			return nil, fmt.Errorf("error scanning share row: %w", err)
+			return nil, err
 		}
 		shares = append(shares, share)
 	}

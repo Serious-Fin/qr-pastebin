@@ -1,8 +1,10 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -26,11 +28,54 @@ type APIError struct {
 }
 
 func sendError(c *gin.Context, statusCode int, message string, err error) {
+	if statusCode >= 500 {
+		sendToDiscord(err.Error())
+	}
+
 	apiError := APIError{Message: message}
 	if gin.IsDebugging() {
 		apiError.Details = err.Error()
 	}
 	c.IndentedJSON(statusCode, apiError)
+}
+
+func sendToDiscord(message string) {
+	runes := []rune(message)
+	sentChars := 0
+	for sentChars < len(runes) {
+		end := min(sentChars+2000, len(runes))
+		sendDiscordMessage(string(runes[sentChars:end]))
+		sentChars = end
+	}
+}
+
+func sendDiscordMessage(message string) {
+	discordToken := os.Getenv("DISCORD_TOKEN")
+	channelId := os.Getenv("DISCORD_CHANNEL_ID")
+	discordApiUrl := fmt.Sprintf("https://discord.com/api/channels/%s/messages", channelId)
+	body := map[string]string{"content": fmt.Sprintf("backend-msg: %s", message)}
+	bodyAsBytes, err := json.Marshal(body)
+	if err != nil {
+		// printing this to standard output because this function is supposed to send errors to discord normally
+		fmt.Printf("error marshaling discord message body: %v", err)
+	}
+	req, err := http.NewRequest("POST", discordApiUrl, bytes.NewBuffer(bodyAsBytes))
+	if err != nil {
+		fmt.Printf("could not create new discord request: %v", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", discordToken)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Printf("error while sending request to discord: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		fmt.Printf("got response status code %d, when expected %d", resp.StatusCode, http.StatusOK)
+	}
 }
 
 var wrongPasswordErr *common.PasswordIncorrectError
@@ -349,9 +394,6 @@ func CreateSession(c *gin.Context) {
 	}
 	c.IndentedJSON(http.StatusOK, response)
 }
-
-// TODO: clean up error handling in API
-// TODO: add logging to discord of errors
 
 // TODO: clean up objects in WEB
 // TODO: clean up error handling in WEB

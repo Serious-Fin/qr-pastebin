@@ -2,7 +2,6 @@ package users
 
 import (
 	"context"
-	"fmt"
 	"math/rand"
 	"qr-pastebin-api/common"
 	"time"
@@ -41,7 +40,7 @@ func (handler *UserDBHandler) CreateUser(request UserCredentials) error {
 
 	_, err = handler.DB.Exec(context.Background(), query, rand.Intn(10000), request.Name, hashedPassword, 0)
 	if err != nil {
-		return fmt.Errorf("error creating new user: %w", err)
+		return err
 	}
 	return nil
 }
@@ -81,7 +80,7 @@ func (handler *UserDBHandler) GetUserFromSession(sessionId string) (*common.User
 	var user common.User
 	err := handler.DB.QueryRow(context.Background(), "SELECT u.id, u.name, u.password, u.role FROM users AS u RIGHT JOIN sessions AS s ON u.id = s.user_id WHERE expire_at > $1 AND s.session_id = $2;", time.Now(), sessionId).Scan(&user.Id, &user.Name, &user.PasswordHash, &user.Role)
 	if err != nil {
-		return nil, fmt.Errorf("error getting user from session '%s': %w", sessionId, err)
+		return nil, err
 	}
 	return &user, nil
 }
@@ -94,7 +93,7 @@ func (handler *UserDBHandler) getActiveSession(userId int) (string, error) {
 
 	err := handler.DB.QueryRow(context.Background(), "SELECT session_id FROM sessions WHERE user_id = $1 AND expire_at > $2;", userId, time.Now()).Scan(&session.SessionId)
 	if err != nil {
-		return "", fmt.Errorf("error getting session with user id '%d': %w", userId, err)
+		return "", err
 	}
 	return session.SessionId, nil
 }
@@ -102,7 +101,7 @@ func (handler *UserDBHandler) getActiveSession(userId int) (string, error) {
 func (handler *UserDBHandler) deleteSessions(userId int) error {
 	_, err := handler.DB.Exec(context.Background(), "DELETE FROM sessions WHERE user_id = $1;", userId)
 	if err != nil {
-		return fmt.Errorf("error deleting sessions for user with id '%d': %w", userId, err)
+		return err
 	}
 	return nil
 }
@@ -113,7 +112,7 @@ func (handler *UserDBHandler) createNewSession(userId int) (string, error) {
 
 	_, err := handler.DB.Exec(context.Background(), query, sessionId, userId, time.Now().AddDate(0, 0, 7))
 	if err != nil {
-		return "", fmt.Errorf("couldn't create new session: %w", err)
+		return "", err
 	}
 	return sessionId, nil
 }
