@@ -1,8 +1,8 @@
 package shares
 
-type PasswordIncorrectError struct {
+type ExpiredShareError struct {
 }
 
-func (e *PasswordIncorrectError) Error() string {
-	return "password is incorrect"
+func (e *ExpiredShareError) Error() string {
+	return "share is expired"
 }

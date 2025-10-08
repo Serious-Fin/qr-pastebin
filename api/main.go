@@ -33,9 +33,10 @@ func sendError(c *gin.Context, statusCode int, message string, err error) {
 	c.IndentedJSON(statusCode, apiError)
 }
 
-var wrongPasswordErr *shares.PasswordIncorrectError
+var wrongPasswordErr *common.PasswordIncorrectError
 var userAlreadyExistsErr *users.UserAlreadyExistsError
-var wrongNameOrPassErr *users.WrongPasswordError
+var expiredShareError *shares.ExpiredShareError
+var notFoundError *common.NotFoundError
 
 func ErrorHandlerMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -49,7 +50,7 @@ func ErrorHandlerMiddleware() gin.HandlerFunc {
 
 			if errors.As(err, &wrongPasswordErr) {
 				statusCode = http.StatusUnauthorized
-				message = "Wrong password"
+				message = wrongPasswordErr.Error()
 			}
 
 			if errors.As(err, &userAlreadyExistsErr) {
@@ -57,9 +58,14 @@ func ErrorHandlerMiddleware() gin.HandlerFunc {
 				message = "User already exists"
 			}
 
-			if errors.As(err, &wrongNameOrPassErr) {
-				statusCode = http.StatusUnauthorized
-				message = wrongNameOrPassErr.Error()
+			if errors.As(err, &expiredShareError) {
+				statusCode = http.StatusNotFound
+				message = expiredShareError.Error()
+			}
+
+			if errors.As(err, &notFoundError) {
+				statusCode = http.StatusNotFound
+				message = notFoundError.Error()
 			}
 
 			if errors.Is(err, sql.ErrNoRows) {
@@ -144,7 +150,7 @@ func main() {
 }
 
 func CreateShare(c *gin.Context) {
-	var body shares.CreateShareRequest
+	var body shares.ShareRequest
 	if err := c.ShouldBind(&body); err != nil {
 		c.Error(err)
 		return
@@ -160,7 +166,7 @@ func CreateShare(c *gin.Context) {
 
 func GetShare(c *gin.Context) {
 	shareId := c.Param("id")
-	response, err := shareHandler.GetShare(shareId)
+	response, err := shareHandler.GetShareForPublic(shareId)
 	if err != nil {
 		c.Error(err)
 		return
@@ -176,7 +182,7 @@ func GetShareForEdit(c *gin.Context) {
 		return
 	}
 
-	response, err := shareHandler.GetShareForEdit(shareId, userId)
+	response, err := shareHandler.GetShareForOwner(shareId, userId)
 	if err != nil {
 		c.Error(err)
 		return
@@ -192,7 +198,7 @@ func UpdateShare(c *gin.Context) {
 		return
 	}
 
-	var body shares.EditShareRequest
+	var body shares.ShareRequest
 	if err := c.ShouldBind(&body); err != nil {
 		c.Error(err)
 		return
@@ -280,7 +286,7 @@ func getUserRoleFromContext(c *gin.Context) (common.Role, error) {
 
 func IsPasswordProtected(c *gin.Context) {
 	shareId := c.Param("id")
-	response, err := shareHandler.GetShare(shareId)
+	response, err := shareHandler.GetShareForPublic(shareId)
 	if err != nil {
 		c.Error(err)
 		return
@@ -344,10 +350,8 @@ func CreateSession(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, response)
 }
 
-// TODO: clean up objects in API (seems like I have 5 different User objects, 5 different share objects)
 // TODO: clean up error handling in API
 // TODO: add logging to discord of errors
-// TODO: clean up API code (methods that do similar things, naming)
 
 // TODO: clean up objects in WEB
 // TODO: clean up error handling in WEB

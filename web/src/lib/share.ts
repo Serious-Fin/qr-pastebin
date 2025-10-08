@@ -1,19 +1,11 @@
-export interface CreateShareRequest {
-	content: string;
-	title?: string;
-	password?: string;
-	expireIn?: string;
-	authorId: number;
-	hideAuthor: boolean;
-}
-
-export interface EditShareRequest {
+export interface ShareRequest {
 	title: string;
 	content: string;
 	setPassword: boolean;
 	password: string;
 	expireIn: string;
 	hideAuthor: boolean;
+	authorId: number;
 }
 
 interface CreateShareResponse {
@@ -48,7 +40,7 @@ export class WrongPasswordError extends Error {
 	}
 }
 
-export async function createShare(request: CreateShareRequest): Promise<string> {
+export async function createShare(request: ShareRequest): Promise<string> {
 	try {
 		const response = await fetch(`http://localhost:8080/share`, {
 			body: JSON.stringify(request),
@@ -212,7 +204,7 @@ export async function deleteShare(shareId: string, sessionId: string): Promise<v
 }
 
 export async function editShare(
-	request: EditShareRequest,
+	request: ShareRequest,
 	sessionId: string,
 	shareId: string
 ): Promise<void> {

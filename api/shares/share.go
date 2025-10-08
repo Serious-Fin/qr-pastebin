@@ -2,7 +2,6 @@ package shares
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 	"qr-pastebin-api/common"
@@ -13,60 +12,42 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-type Share struct {
-	Id         string    `json:"id"`
-	Content    string    `json:"content"`
-	Title      string    `json:"title,omitempty"`
-	ExpireAt   time.Time `json:"expireAt,omitempty"`
-	Password   string    `json:"password,omitempty"`
-	AuthorId   int       `json:"authorId,omitempty"`
-	HideAuthor bool      `json:"hideAuthor"`
-}
-
-type GetShareResponse struct {
-	Id                  string `json:"id"`
-	Content             string `json:"content"`
-	Title               string `json:"title,omitempty"`
-	ExpiresIn           string `json:"expiresIn,omitempty"`
-	IsPasswordProtected bool   `json:"isPasswordProtected,omitempty"`
-	AuthorName          string `json:"authorName,omitempty"`
-	HideAuthor          bool   `json:"hideAuthor"`
-}
-
-type IsPasswordProtectedResponse struct {
-	IsPasswordProtected bool `json:"isPasswordProtected"`
-}
-
-type DBShare struct {
-	Id         string
-	Content    string
-	Title      sql.NullString
-	ExpireAt   sql.NullTime
-	Password   sql.NullString
-	AuthorId   sql.NullInt32
-	HideAuthor bool
-}
-
-type CreateShareRequest struct {
-	Content    string `json:"content"`
-	Title      string `json:"title,omitempty"`
-	ExpireIn   string `json:"expireIn,omitempty"`
-	Password   string `json:"password,omitempty"`
-	AuthorId   int32  `json:"authorId"`
-	HideAuthor bool   `json:"hideAuthor"`
-}
-
-type CreateShareResponse struct {
-	ShareId string `json:"id"`
-}
-
-type EditShareRequest struct {
+type ShareRequest struct {
 	Title       string `json:"title"`
 	Content     string `json:"content"`
 	SetPassword bool   `json:"setPassword"`
 	Password    string `json:"password"`
 	ExpireIn    string `json:"expireIn"`
 	HideAuthor  bool   `json:"hideAuthor"`
+	AuthorId    int    `json:"authorId"`
+}
+
+type ShareResponse struct {
+	Id                  string `json:"id"`
+	Title               string `json:"title"`
+	Content             string `json:"content"`
+	IsPasswordProtected bool   `json:"isPasswordProtected"`
+	ExpiresIn           string `json:"expiresIn"`
+	AuthorName          string `json:"authorName"`
+	HideAuthor          bool   `json:"hideAuthor"`
+}
+
+type Share struct {
+	Id           string
+	Title        string
+	Content      string
+	PasswordHash string
+	ExpireAt     time.Time
+	AuthorId     int
+	HideAuthor   bool
+}
+
+type IsPasswordProtectedResponse struct {
+	IsPasswordProtected bool `json:"isPasswordProtected"`
+}
+
+type CreateShareResponse struct {
+	ShareId string `json:"id"`
 }
 
 type GetProtectedShareRequest struct {
@@ -81,59 +62,75 @@ func NewShareHandler(db *pgx.Conn) *ShareDBHandler {
 	return &ShareDBHandler{DB: db}
 }
 
-func (handler *ShareDBHandler) CreateShare(request CreateShareRequest) (*CreateShareResponse, error) {
-	share, err := createNewShare(request)
+func (handler *ShareDBHandler) CreateShare(shareBody ShareRequest) (*CreateShareResponse, error) {
+	colNames := []string{}
+	args := []any{}
+	values := []string{}
+	argPos := 1
+
+	shareId := common.CreateRandomId(7)
+	colNames = append(colNames, "id")
+	values = append(values, fmt.Sprintf("$%d", argPos))
+	args = append(args, shareId)
+	argPos++
+
+	colNames = append(colNames, "title")
+	values = append(values, fmt.Sprintf("$%d", argPos))
+	args = append(args, shareBody.Title)
+	argPos++
+
+	colNames = append(colNames, "content")
+	values = append(values, fmt.Sprintf("$%d", argPos))
+	args = append(args, shareBody.Content)
+	argPos++
+
+	if shareBody.SetPassword {
+		passwordHash, err := common.CreatePasswordHash(shareBody.Password)
+		if err != nil {
+			return nil, err
+		}
+		colNames = append(colNames, "password")
+		values = append(values, fmt.Sprintf("$%d", argPos))
+		args = append(args, passwordHash)
+		argPos++
+	} else {
+		colNames = append(colNames, "password")
+		values = append(values, fmt.Sprintf("$%d", argPos))
+		args = append(args, "")
+		argPos++
+	}
+
+	expirationDate, err := createExpirationDate(shareBody.ExpireIn)
 	if err != nil {
 		return nil, err
 	}
+	colNames = append(colNames, "expire_at")
+	values = append(values, fmt.Sprintf("$%d", argPos))
+	args = append(args, expirationDate)
+	argPos++
 
-	query, arguments := createInsertStatement(*share)
-	_, err = handler.DB.Exec(context.Background(), query, arguments...)
+	colNames = append(colNames, "hide_author")
+	values = append(values, fmt.Sprintf("$%d", argPos))
+	args = append(args, shareBody.HideAuthor)
+	argPos++
+
+	colNames = append(colNames, "author_id")
+	values = append(values, fmt.Sprintf("$%d", argPos))
+	args = append(args, shareBody.AuthorId)
+	argPos++
+
+	query := fmt.Sprintf("INSERT INTO shares (%s) VALUES (%s);", strings.Join(colNames, ", "), strings.Join(values, ", "))
+
+	_, err = handler.DB.Exec(context.Background(), query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't create new share: %w", err)
 	}
-	return &CreateShareResponse{ShareId: share.Id}, nil
+	return &CreateShareResponse{ShareId: shareId}, nil
 }
 
-func (handler *ShareDBHandler) GetShare(id string) (*GetShareResponse, error) {
-	share, err := handler.readShareFromDB(id)
-	if err != nil {
-		return nil, err
-	}
-
-	if !share.ExpireAt.IsZero() && time.Now().After(share.ExpireAt) {
-		return nil, errors.New("trying to access expired share")
-	}
-
-	shareResponse, err := handler.createGetShareResponse(share)
-	if err != nil {
-		return nil, err
-	}
-
-	if shareResponse.HideAuthor {
-		shareResponse.AuthorName = ""
-	}
-
-	return shareResponse, nil
-}
-
-func (handler *ShareDBHandler) GetShareForEdit(shareId string, userId int) (*GetShareResponse, error) {
-	share, err := handler.readShareFromDBFromUser(shareId, userId)
-	if err != nil {
-		return nil, err
-	}
-
-	shareResponse, err := handler.createGetShareResponse(share)
-	if err != nil {
-		return nil, err
-	}
-
-	return shareResponse, nil
-}
-
-func (handler *ShareDBHandler) UpdateShare(shareId string, userId int, shareBody EditShareRequest) error {
-	setParts := make([]string, 0)
-	args := make([]interface{}, 0)
+func (handler *ShareDBHandler) UpdateShare(shareId string, userId int, shareBody ShareRequest) error {
+	setParts := []string{}
+	args := []any{}
 	argCount := 1
 
 	setParts = append(setParts, fmt.Sprintf("%s = $%d", "title", argCount))
@@ -158,7 +155,6 @@ func (handler *ShareDBHandler) UpdateShare(shareId string, userId int, shareBody
 			args = append(args, passwordHash)
 			argCount++
 		}
-
 	}
 
 	if shareBody.ExpireIn != "no-change" {
@@ -189,15 +185,59 @@ func (handler *ShareDBHandler) UpdateShare(shareId string, userId int, shareBody
 	return err
 }
 
-func (handler *ShareDBHandler) GetShares(userId int) ([]GetShareResponse, error) {
-	shares, err := handler.readSharesFromDB(userId)
+func (handler *ShareDBHandler) GetShareForPublic(id string) (*ShareResponse, error) {
+	share, err := handler.readShare(id)
 	if err != nil {
 		return nil, err
 	}
 
-	shareResponses := make([]GetShareResponse, 0)
+	if !share.ExpireAt.IsZero() && time.Now().After(share.ExpireAt) {
+		return nil, &ExpiredShareError{}
+	}
+
+	shareResponse, err := handler.transformToShareResponse(share)
+	if err != nil {
+		return nil, err
+	}
+
+	if shareResponse.HideAuthor {
+		shareResponse.AuthorName = ""
+	}
+
+	return shareResponse, nil
+}
+
+func (handler *ShareDBHandler) GetShareForOwner(shareId string, userId int) (*ShareResponse, error) {
+	permit, err := handler.HasAccessToShare(userId, shareId, 0)
+	if err != nil {
+		return nil, err
+	}
+	if !permit {
+		return nil, &common.NotFoundError{}
+	}
+
+	share, err := handler.readShare(shareId)
+	if err != nil {
+		return nil, err
+	}
+
+	shareResponse, err := handler.transformToShareResponse(share)
+	if err != nil {
+		return nil, err
+	}
+
+	return shareResponse, nil
+}
+
+func (handler *ShareDBHandler) GetShares(userId int) ([]ShareResponse, error) {
+	shares, err := handler.readShares(userId)
+	if err != nil {
+		return nil, err
+	}
+
+	shareResponses := make([]ShareResponse, 0)
 	for _, share := range shares {
-		newShareResponse, err := handler.createGetShareResponse(share)
+		newShareResponse, err := handler.transformToShareResponse(&share)
 		if err != nil {
 			return nil, err
 		}
@@ -207,8 +247,8 @@ func (handler *ShareDBHandler) GetShares(userId int) ([]GetShareResponse, error)
 	return shareResponses, nil
 }
 
-func (handler *ShareDBHandler) GetProtectedShare(id string, password string) (*GetShareResponse, error) {
-	share, err := handler.readShareFromDB(id)
+func (handler *ShareDBHandler) GetProtectedShare(id string, password string) (*ShareResponse, error) {
+	share, err := handler.readShare(id)
 	if err != nil {
 		return nil, err
 	}
@@ -217,12 +257,12 @@ func (handler *ShareDBHandler) GetProtectedShare(id string, password string) (*G
 		return nil, errors.New("trying to access expired share")
 	}
 
-	passwordOk := common.IsPasswordCorrect(share.Password, password)
+	passwordOk := common.IsPasswordCorrect(share.PasswordHash, password)
 	if !passwordOk {
-		return nil, &PasswordIncorrectError{}
+		return nil, &common.PasswordIncorrectError{}
 	}
 
-	shareResponse, err := handler.createGetShareResponse(share)
+	shareResponse, err := handler.transformToShareResponse(share)
 	if err != nil {
 		return nil, err
 	}
@@ -262,36 +302,27 @@ func (handler *ShareDBHandler) HasAccessToShare(userId int, shareId string, role
 }
 
 func (handler *ShareDBHandler) IsPasswordProtected(id string) (*IsPasswordProtectedResponse, error) {
-	share, err := handler.readShareFromDB(id)
+	share, err := handler.readShare(id)
 	if err != nil {
 		return nil, err
 	}
-	if share.Password == "" {
+	if share.PasswordHash == "" {
 		return &IsPasswordProtectedResponse{IsPasswordProtected: false}, nil
 	} else {
 		return &IsPasswordProtectedResponse{IsPasswordProtected: true}, nil
 	}
 }
 
-func (handler *ShareDBHandler) readShareFromDB(shareId string) (Share, error) {
-	var dbShare DBShare
-	err := handler.DB.QueryRow(context.Background(), "SELECT id, title, content, expire_at, password, author_id, hide_author FROM shares WHERE id = $1;", shareId).Scan(&dbShare.Id, &dbShare.Title, &dbShare.Content, &dbShare.ExpireAt, &dbShare.Password, &dbShare.AuthorId, &dbShare.HideAuthor)
+func (handler *ShareDBHandler) readShare(shareId string) (*Share, error) {
+	var share Share
+	err := handler.DB.QueryRow(context.Background(), "SELECT id, title, content, expire_at, password, author_id, hide_author FROM shares WHERE id = $1;", shareId).Scan(&share.Id, &share.Title, &share.Content, &share.ExpireAt, &share.PasswordHash, &share.AuthorId, &share.HideAuthor)
 	if err != nil {
-		return Share{}, fmt.Errorf("error getting share with id '%s': %w", shareId, err)
+		return nil, fmt.Errorf("error getting share with id '%s': %w", shareId, err)
 	}
-	return convertShareFromDB(dbShare), nil
+	return &share, nil
 }
 
-func (handler *ShareDBHandler) readShareFromDBFromUser(shareId string, userId int) (Share, error) {
-	var dbShare DBShare
-	err := handler.DB.QueryRow(context.Background(), "SELECT id, title, content, expire_at, password, author_id, hide_author FROM shares WHERE id = $1 AND author_id = $2;", shareId, userId).Scan(&dbShare.Id, &dbShare.Title, &dbShare.Content, &dbShare.ExpireAt, &dbShare.Password, &dbShare.AuthorId, &dbShare.HideAuthor)
-	if err != nil {
-		return Share{}, fmt.Errorf("error getting share with id '%s': %w", shareId, err)
-	}
-	return convertShareFromDB(dbShare), nil
-}
-
-func (handler *ShareDBHandler) readSharesFromDB(userId int) ([]Share, error) {
+func (handler *ShareDBHandler) readShares(userId int) ([]Share, error) {
 	rows, err := handler.DB.Query(context.Background(), "SELECT s.id, s.title, s.content, s.expire_at, s.password, s.author_id, s.hide_author FROM users AS u RIGHT JOIN shares AS s ON u.id = s.author_id WHERE u.id = $1;", userId)
 	if err != nil {
 		return nil, fmt.Errorf("error querying shares: %w", err)
@@ -300,14 +331,13 @@ func (handler *ShareDBHandler) readSharesFromDB(userId int) ([]Share, error) {
 
 	shares := make([]Share, 0)
 	for rows.Next() {
-		var dbShare DBShare
-		err := rows.Scan(&dbShare.Id, &dbShare.Title, &dbShare.Content, &dbShare.ExpireAt, &dbShare.Password, &dbShare.AuthorId, &dbShare.HideAuthor)
+		var share Share
+		err := rows.Scan(&share.Id, &share.Title, &share.Content, &share.ExpireAt, &share.PasswordHash, &share.AuthorId, &share.HideAuthor)
 		if err != nil {
 			return nil, fmt.Errorf("error scanning share row: %w", err)
 		}
-		shares = append(shares, convertShareFromDB(dbShare))
+		shares = append(shares, share)
 	}
-	// check for iteration errors
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("row iteration error: %w", err)
 	}
@@ -315,60 +345,11 @@ func (handler *ShareDBHandler) readSharesFromDB(userId int) ([]Share, error) {
 	return shares, nil
 }
 
-func createNewShare(request CreateShareRequest) (*Share, error) {
-	var share Share
-	share.Id = common.CreateRandomId(7)
-	share.Content = request.Content
-	share.Title = request.Title
-	share.AuthorId = int(request.AuthorId)
-	share.HideAuthor = request.HideAuthor
-	if request.Password != "" {
-		passwordHash, err := common.CreatePasswordHash(request.Password)
-		if err != nil {
-			return nil, err
-		}
-		share.Password = passwordHash
-	}
-	if request.ExpireIn != "" {
-		expirationDate, err := createExpirationDate(request.ExpireIn)
-		if err != nil {
-			return nil, err
-		}
-		share.ExpireAt = expirationDate
-	}
-
-	return &share, nil
-}
-
-func createInsertStatement(share Share) (string, []any) {
-	colNames := []string{}
-	args := []any{}
-	values := []string{}
-	argPos := 1
-
-	colNames, args, values, argPos = tryAddColumnToQuery("id", share.Id, argPos, colNames, args, values)
-	colNames, args, values, argPos = tryAddColumnToQuery("content", share.Content, argPos, colNames, args, values)
-	colNames, args, values, argPos = tryAddColumnToQuery("title", share.Title, argPos, colNames, args, values)
-	colNames, args, values, argPos = tryAddColumnToQuery("expire_at", share.ExpireAt, argPos, colNames, args, values)
-	colNames, args, values, argPos = tryAddColumnToQuery("author_id", share.AuthorId, argPos, colNames, args, values)
-	colNames, args, values, argPos = tryAddColumnToQuery("hide_author", share.HideAuthor, argPos, colNames, args, values)
-	colNames, args, values, _ = tryAddColumnToQuery("password", share.Password, argPos, colNames, args, values)
-
-	return fmt.Sprintf("INSERT INTO shares (%s) VALUES (%s);", strings.Join(colNames, ", "), strings.Join(values, ", ")), args
-}
-
-func tryAddColumnToQuery(columnName string, value any, argPos int, columnNames []string, args []any, values []string) ([]string, []any, []string, int) {
-	if value == "" {
-		return columnNames, args, values, argPos
-	}
-
-	columnNames = append(columnNames, columnName)
-	values = append(values, fmt.Sprintf("$%d", argPos))
-	args = append(args, value)
-	return columnNames, args, values, argPos + 1
-}
-
 func createExpirationDate(expireIn string) (time.Time, error) {
+	if expireIn == "never" {
+		return time.Time{}, nil
+	}
+
 	parts := strings.Split(expireIn, "_")
 	if len(parts) != 2 {
 		return time.Now(), fmt.Errorf("expiration period is not of correct format '%s', make sure it is formatted as '5_days'", expireIn)
@@ -400,47 +381,14 @@ func createExpirationDate(expireIn string) (time.Time, error) {
 	return time.Now().Add(duration), nil
 }
 
-func convertShareFromDB(dbShare DBShare) Share {
-	var share Share
-	share.Id = dbShare.Id
-	share.Content = dbShare.Content
-	share.HideAuthor = dbShare.HideAuthor
-	if dbShare.Title.Valid {
-		share.Title = dbShare.Title.String
-	} else {
-		share.Title = ""
-	}
-
-	if dbShare.ExpireAt.Valid {
-		share.ExpireAt = dbShare.ExpireAt.Time
-	} else {
-		share.ExpireAt = time.Time{}
-	}
-
-	if dbShare.Password.Valid {
-		share.Password = dbShare.Password.String
-	} else {
-		share.Password = ""
-	}
-
-	if dbShare.AuthorId.Valid {
-		share.AuthorId = int(dbShare.AuthorId.Int32)
-	} else {
-		share.AuthorId = -1
-	}
-	return share
-}
-
-func (handler *ShareDBHandler) createGetShareResponse(share Share) (*GetShareResponse, error) {
-	var shareResp GetShareResponse
+func (handler *ShareDBHandler) transformToShareResponse(share *Share) (*ShareResponse, error) {
+	var shareResp ShareResponse
 	shareResp.Id = share.Id
 	shareResp.Content = share.Content
 	shareResp.HideAuthor = share.HideAuthor
+	shareResp.Title = share.Title
 
-	if share.Title != "" {
-		shareResp.Title = share.Title
-	}
-	if share.Password != "" {
+	if share.PasswordHash != "" {
 		shareResp.IsPasswordProtected = true
 	}
 	if !share.ExpireAt.IsZero() {

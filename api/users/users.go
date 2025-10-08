@@ -49,12 +49,12 @@ func (handler *UserDBHandler) CreateUser(request UserCredentials) error {
 func (handler *UserDBHandler) CreateSession(request UserCredentials) (*SessionData, error) {
 	user, err := common.GetUserByName(handler.DB, request.Name)
 	if err != nil {
-		return nil, &WrongPasswordError{}
+		return nil, &common.PasswordIncorrectError{}
 	}
 
 	passwordOk := common.IsPasswordCorrect(user.PasswordHash, request.Password)
 	if !passwordOk {
-		return nil, &WrongPasswordError{}
+		return nil, &common.PasswordIncorrectError{}
 	}
 
 	// Try get active session for this user

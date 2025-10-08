@@ -1,4 +1,4 @@
-import { createShare, type CreateShareRequest } from '$lib/share.js';
+import { createShare, type ShareRequest } from '$lib/share.js';
 import { fail, redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 
@@ -12,15 +12,22 @@ export const load: PageServerLoad = ({ locals }) => {
 export const actions = {
 	createShare: async ({ request }) => {
 		const data = await request.formData();
-		const authorId = parseInt((data.get('userId') as string) ?? '-1');
+		const title = data.get('title') ? (data.get('title') as string) : '';
+		const content = data.get('content') ? (data.get('content') as string) : '';
+		const setPassword = data.get('setPassword') !== null;
+		const password = data.get('password') ? (data.get('password') as string) : '';
+		const expireIn = data.get('expireIn') as string;
 		const hideAuthor = data.get('hideAuthor') !== null;
-		const params: CreateShareRequest = {
-			title: data.get('title') as string,
-			content: data.get('content') as string,
-			expireIn: data.get('expireIn') as string,
-			password: data.get('password') as string,
-			authorId,
-			hideAuthor
+		const authorId = parseInt((data.get('userId') as string) ?? '-1');
+
+		const params: ShareRequest = {
+			title,
+			content,
+			setPassword,
+			password,
+			expireIn,
+			hideAuthor,
+			authorId
 		};
 		let newShareId = '';
 		try {
