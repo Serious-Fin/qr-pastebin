@@ -1,5 +1,5 @@
 import { deleteShare, getSharesForUser, type Share } from '$lib/share';
-import { fail } from '@sveltejs/kit';
+import { error, fail } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
 
 export const load: PageServerLoad = async ({ locals }) => {
@@ -7,8 +7,11 @@ export const load: PageServerLoad = async ({ locals }) => {
 	let shares: Share[];
 	try {
 		shares = await getSharesForUser(locals.sessionId ?? '');
-	} catch {
-		shares = [];
+	} catch (err) {
+		if (err instanceof Error) {
+			throw error(500, { message: err.message });
+		}
+		throw error(500, { message: 'Server error' });
 	}
 
 	return {
