@@ -31,7 +31,7 @@ export const actions: Actions = {
 			await deleteShare(shareId, sessionId);
 		} catch (err) {
 			if (err instanceof Error) {
-				return fail(400, { message: err.message });
+				return fail(500, { message: err.message });
 			}
 			return fail(500, { message: 'Unexpected server error' });
 		}

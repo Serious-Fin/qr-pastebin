@@ -12,15 +12,19 @@
 		return async ({ update, result }) => {
 			isLoadingDelete = true;
 			try {
-				await update();
-				if (result.type === 'success') {
+				if (result.type === 'failure') {
+					throw Error(result.data?.message || 'Error deleting share, try again');
+				} else {
 					logSuccess('Share deleted');
-				} else if (result.type === 'failure') {
-					throw Error(result.data?.message || 'Unknown server error occurred');
+					await update();
 				}
 			} catch (err) {
 				if (err instanceof Error) {
-					logError('Error deleting share, try again later', err);
+					if (result?.status && result.status >= 500) {
+						logError('Server error', err);
+					} else {
+						logError(err.message, err);
+					}
 				}
 			} finally {
 				isLoadingDelete = false;
