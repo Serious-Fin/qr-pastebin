@@ -11,7 +11,6 @@
 	let name = $state('');
 	let password = $state('');
 	let isLoading = $state(false);
-	let err = $state('');
 	let redirectTo = $state(page.url.searchParams.get('redirectTo') ?? '/');
 
 	const handleLoginErrors: SubmitFunction = () => {

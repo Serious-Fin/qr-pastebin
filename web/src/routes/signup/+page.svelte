@@ -13,7 +13,6 @@
 	let password = $state('');
 	let passwordMeetsCriteria = $state(false);
 	let isLoading = $state(false);
-	let err = $state('');
 	let redirectTo = $state(page.url.searchParams.get('redirectTo') ?? '/');
 
 	const updatePasswordMeetsCriteria = (newState: boolean) => {

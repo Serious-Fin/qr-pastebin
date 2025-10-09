@@ -4,32 +4,32 @@
 	import { FetchShareStatus, type Share } from '$lib/share';
 	import type { SubmitFunction } from '@sveltejs/kit';
 	import LoadingSpinner from './LoadingSpinner.svelte';
+	import { logSuccess, logError } from '$lib/helpers';
 
 	let { updateShare }: { updateShare: (share: Share, status: FetchShareStatus) => void } = $props();
 
 	let isLoading = $state(false);
-	let err = $state('');
 
 	const showShare: SubmitFunction = () => {
 		isLoading = true;
 		return async ({ update, result }) => {
 			try {
-				await update();
-				if (result.type === 'success' && result.data?.errMsg) {
-					err = result.data.errMsg;
-				} else if (result.type === 'success' && result.data?.share) {
+				if (result.type === 'success' && result.data) {
 					const share = result.data.share;
 					const status = FetchShareStatus.Accessible;
 					updateShare(share, status);
+					await update();
+					logSuccess('Password correct, share unlocked');
 				} else if (result.type === 'failure') {
-					throw Error(result.data?.message || 'Unknown server error occurred');
-				} else {
-					throw Error('Could not query agent');
+					throw Error(result.data?.message || 'Error unlocking share, try again');
 				}
 			} catch (err) {
 				if (err instanceof Error) {
-					console.error('BOOM ERROR');
-					return;
+					if (result?.status && result.status >= 500) {
+						logError('Server error', err);
+					} else {
+						logError(err.message, err);
+					}
 				}
 			} finally {
 				isLoading = false;
@@ -54,10 +54,6 @@
 		<input type="submit" value="Access" />
 	{/if}
 </form>
-
-{#if err}
-	<p id="err">{err}</p>
-{/if}
 
 <style>
 	h2 {
@@ -90,11 +86,6 @@
 	input[type='submit']:active {
 		box-shadow: 1px 1px 1px 1px rgba(0, 0, 0, 0.199);
 		transform: translateY(2px);
-	}
-
-	#err {
-		color: red;
-		margin-top: 30px;
 	}
 
 	#loadingBox {

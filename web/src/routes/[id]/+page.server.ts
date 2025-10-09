@@ -62,12 +62,10 @@ export const actions = {
 		try {
 			share = await getPasswordProtectedShare(id, params);
 		} catch (err) {
-			if (err instanceof WrongPasswordError) {
-				return { errMsg: err.message };
+			if (err instanceof Error) {
+				return fail(err instanceof WrongPasswordError ? 400 : 500, { message: err.message });
 			}
-			return fail(500, {
-				message: err instanceof Error ? err.message : 'Unknown error'
-			});
+			return fail(500, { message: 'Unknown server error' });
 		}
 		return { share };
 	},
@@ -80,7 +78,7 @@ export const actions = {
 			await deleteShare(shareId, sessionId);
 		} catch (err) {
 			if (err instanceof Error) {
-				return fail(400, { message: err.message });
+				return fail(500, { message: err.message });
 			}
 			return fail(500, { message: 'Unexpected server error' });
 		}
