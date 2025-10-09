@@ -1,6 +1,6 @@
 import type { PageServerLoad, Actions } from './$types';
 import { getShareForEdit, type ShareRequest, editShare } from '$lib/share';
-import { fail } from '@sveltejs/kit';
+import { fail, redirect } from '@sveltejs/kit';
 
 export const load: PageServerLoad = async ({ locals, params }) => {
 	const share = await getShareForEdit(params.id, locals.sessionId ?? '');
@@ -31,9 +31,11 @@ export const actions: Actions = {
 			await editShare(shareBody, sessionId, shareId);
 		} catch (err) {
 			if (err instanceof Error) {
-				return fail(400, { message: err.message });
+				return fail(500, { message: err.message });
 			}
 			return fail(500, { message: 'Unexpected server error' });
 		}
+
+		throw redirect(303, `/shares/edit/${shareId}`);
 	}
 };

@@ -3,6 +3,7 @@
 	import { enhance } from '$app/forms';
 	import type { SubmitFunction } from '@sveltejs/kit';
 	import { logError, logSuccess, truncateString } from '$lib/helpers';
+	import LoadingSpinner from '$lib/componenets/LoadingSpinner.svelte';
 	let { data }: PageProps = $props();
 	let share = $state(data.share);
 	let setPassword = $state(false);
@@ -12,16 +13,19 @@
 		return async ({ update, result }) => {
 			isLoading = true;
 			try {
-				await update();
-				if (result.type === 'success') {
+				if (result.type === 'failure') {
+					throw Error(result.data?.message || 'Error updating share, try again');
+				} else {
 					logSuccess('Share updated');
-					window.location.href = `/shares/edit/${share.id}`;
-				} else if (result.type === 'failure') {
-					throw Error(result.data?.message || 'Unknown server error occurred');
+					await update();
 				}
 			} catch (err) {
 				if (err instanceof Error) {
-					logError('Error editing share, try again later', err);
+					if (result?.status && result.status >= 500) {
+						logError('Server error', err);
+					} else {
+						logError(err.message, err);
+					}
 				}
 			} finally {
 				isLoading = false;
@@ -77,8 +81,13 @@
 		</div>
 
 		<input type="hidden" id="shareId" name="shareId" bind:value={share.id} />
-
-		<input type="submit" value="Save changes" />
+		{#if isLoading}
+			<div id="loadingBox">
+				<LoadingSpinner />
+			</div>
+		{:else}
+			<input type="submit" value="Save changes" />
+		{/if}
 	</form>
 </section>
 
@@ -94,6 +103,10 @@
 		width: 100vw;
 		height: 100vh;
 		padding: 25px 10px;
+	}
+
+	#loadingBox {
+		margin-top: 30px;
 	}
 
 	h1 {
