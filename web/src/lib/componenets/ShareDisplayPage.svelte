@@ -16,16 +16,19 @@
 		return async ({ update, result }) => {
 			isLoading = true;
 			try {
-				await update();
-				if (result.type === 'success') {
-					logSuccess('Share deleted');
+				if (result.type === 'failure') {
+					throw Error(result.data?.message || 'Error deleting share, try again');
+				} else {
+					await update();
 					window.location.href = `/${share.id}`;
-				} else if (result.type === 'failure') {
-					throw Error(result.data?.message || 'Unknown server error occurred');
 				}
 			} catch (err) {
 				if (err instanceof Error) {
-					logError('Error deleting share, try again later', err);
+					if (result?.status && result.status >= 500) {
+						logError('Server error', err);
+					} else {
+						logError(err.message, err);
+					}
 				}
 			} finally {
 				isLoading = false;
@@ -70,7 +73,9 @@
 {#if isAdmin}
 	<form method="POST" action="?/deleteShare" use:enhance={handleDeleteSubmissionError}>
 		{#if isLoading}
-			<LoadingSpinner />
+			<div id="loadingBox">
+				<LoadingSpinner />
+			</div>
 		{:else}
 			<input type="hidden" id="shareId" name="shareId" value={share.id} />
 			<input type="submit" value="Delete" class="button delete" />
@@ -93,6 +98,10 @@
 		padding: 7px 8px;
 		border-radius: 5px;
 		font-size: 12pt;
+	}
+
+	#loadingBox {
+		margin-top: 30px;
 	}
 
 	#share-info {
