@@ -20,6 +20,12 @@ export const actions = {
 		const hideAuthor = data.get('hideAuthor') !== null;
 		const authorId = parseInt((data.get('userId') as string) ?? '-1');
 
+		if (setPassword && password == '') {
+			return fail(400, {
+				message: 'Can not set empty password. Uncheck "Set Password" for no password'
+			});
+		}
+
 		const params: ShareRequest = {
 			title,
 			content,

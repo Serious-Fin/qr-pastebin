@@ -1,11 +1,7 @@
-import {
-	createNewUser,
-	UserAlreadyExistsError,
-	type User,
-	tryCreateSessionForUser
-} from '$lib/user';
+import { createNewUser, type User, tryCreateSessionForUser } from '$lib/user';
 import { fail, redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
+import { UserAlreadyExistsError } from '$lib/user';
 
 export const load: PageServerLoad = ({ locals }) => {
 	return {
@@ -24,18 +20,10 @@ export const actions = {
 		try {
 			await createNewUser(user);
 		} catch (err) {
-			if (err instanceof UserAlreadyExistsError) {
-				return {
-					errMsg: err.message,
-					user: {
-						name: user.name,
-						password: user.password
-					}
-				};
+			if (err instanceof Error) {
+				return fail(err instanceof UserAlreadyExistsError ? 400 : 500, { message: err.message });
 			}
-			return fail(500, {
-				message: err instanceof Error ? err.message : 'Unknown error'
-			});
+			return fail(500, { message: 'Unknown server error' });
 		}
 
 		let sessionId = '';
@@ -44,14 +32,9 @@ export const actions = {
 			sessionId = await tryCreateSessionForUser(user);
 		} catch (err) {
 			if (err instanceof Error) {
-				return {
-					errMsg: err.message,
-					user: {
-						name: user.name,
-						password: user.password
-					}
-				};
+				return fail(400, { message: err.message });
 			}
+			return fail(500, { message: 'Unknown server error' });
 		}
 
 		cookies.set('session', sessionId, {

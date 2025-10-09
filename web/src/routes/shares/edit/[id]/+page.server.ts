@@ -1,5 +1,5 @@
 import type { PageServerLoad, Actions } from './$types';
-import { getShareForEdit, type EditShareRequest, editShare } from '$lib/share';
+import { getShareForEdit, type ShareRequest, editShare } from '$lib/share';
 import { fail } from '@sveltejs/kit';
 
 export const load: PageServerLoad = async ({ locals, params }) => {
@@ -17,17 +17,18 @@ export const actions: Actions = {
 		const shareId = data.get('shareId') as string;
 		const sessionId = locals.sessionId ?? '';
 
-		const editShareBody: EditShareRequest = {
+		const shareBody: ShareRequest = {
 			title: data.get('title') as string,
 			content: data.get('content') as string,
 			setPassword: data.get('setPassword') !== null,
 			password: data.get('password') as string,
 			expireIn: data.get('expireIn') as string,
-			hideAuthor: data.get('hideAuthor') !== null
+			hideAuthor: data.get('hideAuthor') !== null,
+			authorId: -1
 		};
 
 		try {
-			await editShare(editShareBody, sessionId, shareId);
+			await editShare(shareBody, sessionId, shareId);
 		} catch (err) {
 			if (err instanceof Error) {
 				return fail(400, { message: err.message });

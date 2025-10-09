@@ -1,5 +1,5 @@
-import { type User, tryCreateSessionForUser } from '$lib/user';
-import { redirect } from '@sveltejs/kit';
+import { type User, WrongNameOrPassError, tryCreateSessionForUser } from '$lib/user';
+import { redirect, fail } from '@sveltejs/kit';
 import type { Actions } from './$types';
 import type { PageServerLoad } from './$types';
 
@@ -24,14 +24,9 @@ export const actions: Actions = {
 			sessionId = await tryCreateSessionForUser(user);
 		} catch (err) {
 			if (err instanceof Error) {
-				return {
-					errMsg: err.message,
-					user: {
-						name: user.name,
-						password: user.password
-					}
-				};
+				return fail(err instanceof WrongNameOrPassError ? 400 : 500, { message: err.message });
 			}
+			return fail(500, { message: 'Unknown server error' });
 		}
 
 		cookies.set('session', sessionId, {

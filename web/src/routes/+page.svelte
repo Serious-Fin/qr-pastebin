@@ -1,13 +1,43 @@
 <script lang="ts">
 	import type { PageProps } from './$types';
+	import { enhance } from '$app/forms';
+	import type { SubmitFunction } from '@sveltejs/kit';
+	import { logError, logSuccess } from '$lib/helpers';
+	import LoadingSpinner from '$lib/componenets/LoadingSpinner.svelte';
 	let { data }: PageProps = $props();
 	let userId = $state(data.userId);
+	let setPassword = $state(false);
+	let isLoading = $state(false);
+
+	const handleShareCreation: SubmitFunction = () => {
+		isLoading = true;
+		return async ({ update, result }) => {
+			try {
+				if (result.type === 'failure') {
+					throw Error(result.data?.message || 'Error signing in, try again');
+				} else {
+					logSuccess('Share created');
+					await update();
+				}
+			} catch (err) {
+				if (err instanceof Error) {
+					if (result?.status && result.status >= 500) {
+						logError('Server error', err);
+					} else {
+						logError(err.message, err);
+					}
+				}
+			} finally {
+				isLoading = false;
+			}
+		};
+	};
 </script>
 
 <section id="main">
 	<h1>Shareit</h1>
 	<h2>New share</h2>
-	<form method="POST" action="?/createShare">
+	<form method="POST" action="?/createShare" use:enhance={handleShareCreation}>
 		<textarea id="content" name="content" required></textarea>
 
 		<div id="grid">
@@ -28,16 +58,31 @@
 				<option value="1_years">1 year</option>
 			</select>
 
-			<label for="password">Password:</label>
-			<input type="password" class="property-input" name="password" id="password" />
+			<label for="setPassword">Set password</label>
+			<input type="checkbox" id="setPassword" name="setPassword" bind:checked={setPassword} />
 
-			<label for="hideAuthor">Hide author?</label>
+			<label for="password">Password:</label>
+			<input
+				type="password"
+				class="property-input"
+				name="password"
+				id="password"
+				disabled={!setPassword}
+			/>
+
+			<label for="hideAuthor">Hide author</label>
 			<input type="checkbox" id="hideAuthor" name="hideAuthor" />
 		</div>
 
 		<input type="hidden" id="userId" name="userId" bind:value={userId} />
 
-		<input type="submit" value="Create" />
+		{#if isLoading}
+			<div id="loadingBox">
+				<LoadingSpinner />
+			</div>
+		{:else}
+			<input type="submit" value="Create" />
+		{/if}
 	</form>
 </section>
 
@@ -53,6 +98,10 @@
 		width: 100vw;
 		height: 100vh;
 		padding: 25px 10px;
+	}
+
+	#loadingBox {
+		margin-top: 30px;
 	}
 
 	h1 {

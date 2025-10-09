@@ -4,6 +4,7 @@
 	import type { PageProps } from './$types';
 	import { page } from '$app/state';
 	import LoadingSpinner from '$lib/componenets/LoadingSpinner.svelte';
+	import { logError, logSuccess } from '$lib/helpers';
 
 	let { data }: PageProps = $props();
 
@@ -17,23 +18,19 @@
 		isLoading = true;
 		return async ({ update, result }) => {
 			try {
-				await update();
-				if (result.type === 'success') {
-					if (result.data?.errMsg) {
-						err = result.data.errMsg;
-						name = result.data.user.name;
-						password = result.data.user.password;
-					}
-				} else if (result.type === 'redirect') {
-					return;
-				} else if (result.type === 'failure') {
-					throw Error(result.data?.message || 'Unknown server error occurred');
+				if (result.type === 'failure') {
+					throw Error(result.data?.message || 'Error logging in, try again');
 				} else {
-					throw Error('Could not query agent');
+					logSuccess('Logged in successfully');
+					await update();
 				}
 			} catch (err) {
 				if (err instanceof Error) {
-					console.error(`Error logging in: ${JSON.stringify(err)}`);
+					if (result?.status && result.status >= 500) {
+						logError('Server error', err);
+					} else {
+						logError(err.message, err);
+					}
 				}
 			} finally {
 				isLoading = false;
@@ -48,9 +45,9 @@
 		<h2>Login</h2>
 		<form method="POST" action="?/login" use:enhance={handleLoginErrors}>
 			<label for="name">Name</label>
-			<input type="text" id="name" name="name" bind:value={name} />
+			<input type="text" id="name" name="name" bind:value={name} required />
 			<label for="password">Password</label>
-			<input type="password" id="password" name="password" bind:value={password} />
+			<input type="password" id="password" name="password" bind:value={password} required />
 			<p>Don't have an account? <a href="/signup">Sign-up</a></p>
 
 			{#if isLoading}
@@ -59,10 +56,6 @@
 				</div>
 			{:else}
 				<input type="submit" value="Login" />
-			{/if}
-
-			{#if err}
-				<p id="err">{err}</p>
 			{/if}
 
 			<input type="hidden" id="redirectTo" name="redirectTo" bind:value={redirectTo} />
@@ -138,12 +131,6 @@
 
 	#already-have-acc {
 		margin-top: 40px;
-	}
-
-	#err {
-		color: red;
-		margin-top: 30px;
-		align-self: center;
 	}
 
 	#loadingBox {

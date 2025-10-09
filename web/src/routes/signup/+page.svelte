@@ -5,6 +5,7 @@
 	import type { PageProps } from './$types';
 	import { page } from '$app/state';
 	import LoadingSpinner from '$lib/componenets/LoadingSpinner.svelte';
+	import { logError, logSuccess } from '$lib/helpers';
 
 	let { data }: PageProps = $props();
 
@@ -23,23 +24,19 @@
 		isLoading = true;
 		return async ({ update, result }) => {
 			try {
-				await update();
-				if (result.type === 'success') {
-					if (result.data?.errMsg) {
-						err = result.data.errMsg;
-						name = result.data.user.name;
-						password = result.data.user.password;
-					}
-				} else if (result.type === 'redirect') {
-					return;
-				} else if (result.type === 'failure') {
-					throw Error(result.data?.message || 'Unknown server error occurred');
+				if (result.type === 'failure') {
+					throw Error(result.data?.message || 'Error signing in, try again');
 				} else {
-					throw Error('Could not query agent');
+					logSuccess('Account created successfully');
+					await update();
 				}
 			} catch (err) {
 				if (err instanceof Error) {
-					console.error(`Error signing in: ${JSON.stringify(err)}`);
+					if (result?.status && result.status >= 500) {
+						logError('Server error', err);
+					} else {
+						logError(err.message, err);
+					}
 				}
 			} finally {
 				isLoading = false;
@@ -65,10 +62,6 @@
 				</div>
 			{:else}
 				<input type="submit" value="Sign-up" disabled={!passwordMeetsCriteria} />
-			{/if}
-
-			{#if err}
-				<p id="err">{err}</p>
 			{/if}
 
 			<input type="hidden" id="redirectTo" name="redirectTo" bind:value={redirectTo} />
@@ -140,12 +133,6 @@
 		font-size: 12pt;
 		margin-top: 15px;
 		align-self: baseline;
-	}
-
-	#err {
-		color: red;
-		margin-top: 30px;
-		align-self: center;
 	}
 
 	#already-have-acc {
