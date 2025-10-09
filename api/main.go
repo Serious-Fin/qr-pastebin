@@ -395,7 +395,6 @@ func CreateSession(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, response)
 }
 
-// TODO: clean up objects in WEB
 // TODO: clean up error handling in WEB
 // TODO: add logging to discord of errors
 // TODO: clean up WEB code

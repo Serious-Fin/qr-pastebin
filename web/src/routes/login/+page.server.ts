@@ -1,4 +1,4 @@
-import { type User, WrongNameOrPassError, tryCreateSessionForUser } from '$lib/user';
+import { type UserCredentials, WrongNameOrPassError, tryCreateSessionForUser } from '$lib/user';
 import { redirect, fail } from '@sveltejs/kit';
 import type { Actions } from './$types';
 import type { PageServerLoad } from './$types';
@@ -13,7 +13,7 @@ export const load: PageServerLoad = ({ locals }) => {
 export const actions: Actions = {
 	login: async ({ request, cookies }) => {
 		const data = await request.formData();
-		const user: User = {
+		const user: UserCredentials = {
 			name: data.get('name') as string,
 			password: data.get('password') as string
 		};

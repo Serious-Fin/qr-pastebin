@@ -1,4 +1,4 @@
-import { createNewUser, type User, tryCreateSessionForUser } from '$lib/user';
+import { createNewUser, type UserCredentials, tryCreateSessionForUser } from '$lib/user';
 import { fail, redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { UserAlreadyExistsError } from '$lib/user';
@@ -13,7 +13,7 @@ export const load: PageServerLoad = ({ locals }) => {
 export const actions = {
 	createNewUser: async ({ request, cookies }) => {
 		const data = await request.formData();
-		const user: User = {
+		const user: UserCredentials = {
 			name: data.get('name') as string,
 			password: data.get('password') as string
 		};

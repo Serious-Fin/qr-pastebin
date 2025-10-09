@@ -1,12 +1,11 @@
-export interface User {
+export interface UserCredentials {
 	name: string;
 	password: string;
 }
 
-export interface UserWithId {
+export interface User {
 	id: number;
 	name: string;
-	password: string;
 	role: number;
 }
 
@@ -25,7 +24,7 @@ export class WrongNameOrPassError extends Error {
 	}
 }
 
-export async function createNewUser(user: User) {
+export async function createNewUser(user: UserCredentials) {
 	try {
 		const response = await fetch(`http://localhost:8080/user`, {
 			body: JSON.stringify(user),
@@ -54,7 +53,7 @@ export async function createNewUser(user: User) {
 	}
 }
 
-export async function tryCreateSessionForUser(user: User): Promise<string> {
+export async function tryCreateSessionForUser(user: UserCredentials): Promise<string> {
 	try {
 		const response = await fetch(`http://localhost:8080/user/session`, {
 			body: JSON.stringify(user),
@@ -85,7 +84,7 @@ export async function tryCreateSessionForUser(user: User): Promise<string> {
 	}
 }
 
-export async function tryGetSessionForUser(sessionId: string): Promise<UserWithId> {
+export async function tryGetSessionForUser(sessionId: string): Promise<User> {
 	try {
 		const response = await fetch(`http://localhost:8080/user/session/${sessionId}`);
 		if (!response.ok) {
