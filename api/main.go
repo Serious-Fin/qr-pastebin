@@ -395,8 +395,6 @@ func CreateSession(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, response)
 }
 
-// TODO: add logging to discord of errors
-
 // TODO: add tablet styling
 // TODO: add desktop styling
 

@@ -48,4 +48,21 @@
 		margin-bottom: 25px;
 		font-weight: 500;
 	}
+
+	@media (min-width: 768px) {
+		#agent {
+			font-size: 13pt;
+		}
+
+		.query_btn {
+			width: 60px;
+			height: 60px;
+		}
+	}
+
+	@media (min-width: 1024px) {
+		h1 {
+			font-size: 22pt;
+		}
+	}
 </style>
