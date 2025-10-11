@@ -36,7 +36,7 @@ func (handler *UserDBHandler) CreateUser(request UserCredentials) error {
 	if err != nil {
 		return err
 	}
-	query := "INSERT INTO users (id, name, password, role) VALUES ($1, $2, $3, $4);"
+	query := "INSERT INTO users (id, name, passwordHash, role) VALUES ($1, $2, $3, $4);"
 
 	_, err = handler.DB.Exec(context.Background(), query, rand.Intn(10000), request.Name, hashedPassword, 0)
 	if err != nil {
@@ -78,7 +78,7 @@ func (handler *UserDBHandler) CreateSession(request UserCredentials) (*SessionDa
 
 func (handler *UserDBHandler) GetUserFromSession(sessionId string) (*common.User, error) {
 	var user common.User
-	err := handler.DB.QueryRow(context.Background(), "SELECT u.id, u.name, u.password, u.role FROM users AS u RIGHT JOIN sessions AS s ON u.id = s.user_id WHERE expire_at > $1 AND s.session_id = $2;", time.Now(), sessionId).Scan(&user.Id, &user.Name, &user.PasswordHash, &user.Role)
+	err := handler.DB.QueryRow(context.Background(), "SELECT u.id, u.name, u.passwordHash, u.role FROM users AS u RIGHT JOIN sessions AS s ON u.id = s.user_id WHERE expire_at > $1 AND s.session_id = $2;", time.Now(), sessionId).Scan(&user.Id, &user.Name, &user.PasswordHash, &user.Role)
 	if err != nil {
 		return nil, err
 	}

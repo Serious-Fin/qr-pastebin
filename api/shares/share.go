@@ -83,21 +83,18 @@ func (handler *ShareDBHandler) CreateShare(shareBody ShareRequest) (*CreateShare
 	args = append(args, shareBody.Content)
 	argPos++
 
+	colNames = append(colNames, "passwordHash")
+	values = append(values, fmt.Sprintf("$%d", argPos))
 	if shareBody.SetPassword {
 		passwordHash, err := common.CreatePasswordHash(shareBody.Password)
 		if err != nil {
 			return nil, err
 		}
-		colNames = append(colNames, "password")
-		values = append(values, fmt.Sprintf("$%d", argPos))
 		args = append(args, passwordHash)
-		argPos++
 	} else {
-		colNames = append(colNames, "password")
-		values = append(values, fmt.Sprintf("$%d", argPos))
 		args = append(args, "")
-		argPos++
 	}
+	argPos++
 
 	expirationDate, err := createExpirationDate(shareBody.ExpireIn)
 	if err != nil {
@@ -142,7 +139,7 @@ func (handler *ShareDBHandler) UpdateShare(shareId string, userId int, shareBody
 
 	if shareBody.SetPassword {
 		if shareBody.Password == "" {
-			setParts = append(setParts, fmt.Sprintf("%s = $%d", "password", argCount))
+			setParts = append(setParts, fmt.Sprintf("%s = $%d", "passwordHash", argCount))
 			args = append(args, "")
 			argCount++
 		} else {
@@ -150,7 +147,7 @@ func (handler *ShareDBHandler) UpdateShare(shareId string, userId int, shareBody
 			if err != nil {
 				return err
 			}
-			setParts = append(setParts, fmt.Sprintf("%s = $%d", "password", argCount))
+			setParts = append(setParts, fmt.Sprintf("%s = $%d", "passwordHash", argCount))
 			args = append(args, passwordHash)
 			argCount++
 		}
@@ -314,7 +311,7 @@ func (handler *ShareDBHandler) IsPasswordProtected(id string) (*IsPasswordProtec
 
 func (handler *ShareDBHandler) readShare(shareId string) (*Share, error) {
 	var share Share
-	err := handler.DB.QueryRow(context.Background(), "SELECT id, title, content, expire_at, password, author_id, hide_author FROM shares WHERE id = $1;", shareId).Scan(&share.Id, &share.Title, &share.Content, &share.ExpireAt, &share.PasswordHash, &share.AuthorId, &share.HideAuthor)
+	err := handler.DB.QueryRow(context.Background(), "SELECT id, title, content, expire_at, passwordHash, author_id, hide_author FROM shares WHERE id = $1;", shareId).Scan(&share.Id, &share.Title, &share.Content, &share.ExpireAt, &share.PasswordHash, &share.AuthorId, &share.HideAuthor)
 	if err != nil {
 		return nil, err
 	}
@@ -322,7 +319,7 @@ func (handler *ShareDBHandler) readShare(shareId string) (*Share, error) {
 }
 
 func (handler *ShareDBHandler) readShares(userId int) ([]Share, error) {
-	rows, err := handler.DB.Query(context.Background(), "SELECT s.id, s.title, s.content, s.expire_at, s.password, s.author_id, s.hide_author FROM users AS u RIGHT JOIN shares AS s ON u.id = s.author_id WHERE u.id = $1;", userId)
+	rows, err := handler.DB.Query(context.Background(), "SELECT s.id, s.title, s.content, s.expire_at, s.passwordHash, s.author_id, s.hide_author FROM users AS u RIGHT JOIN shares AS s ON u.id = s.author_id WHERE u.id = $1;", userId)
 	if err != nil {
 		return nil, fmt.Errorf("error querying shares: %w", err)
 	}
