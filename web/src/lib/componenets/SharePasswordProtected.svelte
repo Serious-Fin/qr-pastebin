@@ -106,10 +106,4 @@
 			margin-top: 30px;
 		}
 	}
-
-	@media (min-width: 1024px) {
-		h1 {
-			font-size: 22pt;
-		}
-	}
 </style>

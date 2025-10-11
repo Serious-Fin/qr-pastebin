@@ -135,4 +135,22 @@
 	#loadingBox {
 		margin-top: 20px;
 	}
+
+	@media (min-width: 768px) {
+		#main {
+			padding: 30px 50px;
+		}
+
+		form {
+			max-width: 350px;
+		}
+
+		label {
+			margin-bottom: 5px;
+		}
+
+		p {
+			margin-top: 30px;
+		}
+	}
 </style>

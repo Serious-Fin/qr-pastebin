@@ -202,10 +202,4 @@
 			width: 25px;
 		}
 	}
-
-	@media (min-width: 1024px) {
-		#main {
-			background-color: green;
-		}
-	}
 </style>

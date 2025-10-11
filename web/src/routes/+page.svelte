@@ -186,4 +186,15 @@
 			width: 25px;
 		}
 	}
+
+	@media (min-width: 1024px) {
+		#grid {
+			row-gap: 20px;
+			grid-template-columns: 170px auto;
+		}
+
+		input[type='submit'] {
+			margin-top: 30px;
+		}
+	}
 </style>

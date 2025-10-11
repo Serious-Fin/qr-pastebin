@@ -72,4 +72,16 @@
 		padding: 5px 7px;
 		width: 100%;
 	}
+
+	@media (min-width: 768px) {
+		label {
+			margin-bottom: 5px;
+		}
+
+		#password-tips {
+			margin-top: 20px;
+			margin-bottom: 20px;
+			margin-right: auto;
+		}
+	}
 </style>

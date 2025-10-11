@@ -169,11 +169,15 @@
 		#main {
 			padding: 30px 50px;
 		}
+
+		#share-box {
+			margin-bottom: 60px;
+		}
 	}
 
 	@media (min-width: 1024px) {
-		#main {
-			background-color: green;
+		#share-box {
+			max-width: 900px;
 		}
 	}
 </style>

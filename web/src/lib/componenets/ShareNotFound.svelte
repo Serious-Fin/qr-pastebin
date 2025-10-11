@@ -49,5 +49,9 @@
 		h2 {
 			margin-bottom: 50px;
 		}
+
+		ul {
+			font-size: 12pt;
+		}
 	}
 </style>

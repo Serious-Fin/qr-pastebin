@@ -12,6 +12,14 @@
 	if (pathName !== '/login' && pathName !== '/signup') {
 		redirectTo = pathName;
 	}
+
+	const logout = () => {
+		let redirectTo = encodeURIComponent(page.url.pathname);
+		if (redirectTo.includes('edit') || redirectTo.includes('shares')) {
+			redirectTo = '/';
+		}
+		window.location.href = `/api/logout?redirectTo=${redirectTo}`;
+	};
 </script>
 
 <svelte:head>
@@ -23,12 +31,7 @@
 <div id="header-box">
 	<div id="login-box">
 		{#if data.userId !== -1}
-			<button
-				class="button"
-				onclick={() =>
-					(window.location.href = `/api/logout?redirectTo=${encodeURIComponent(page.url.pathname)}`)}
-				>Logout</button
-			>
+			<button class="button" onclick={logout}>Logout</button>
 			<p>{data.username}</p>
 		{:else}
 			<a href={`/login?redirectTo=${encodeURIComponent(redirectTo)}`}>Login</a>
