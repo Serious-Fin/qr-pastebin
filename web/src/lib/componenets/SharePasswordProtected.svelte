@@ -91,4 +91,25 @@
 	#loadingBox {
 		margin-top: 20px;
 	}
+
+	@media (min-width: 768px) {
+		h2 {
+			margin-bottom: 70px;
+		}
+
+		input[type='password'] {
+			width: 250px;
+			margin-left: 15px;
+		}
+
+		input[type='submit'] {
+			margin-top: 30px;
+		}
+	}
+
+	@media (min-width: 1024px) {
+		h1 {
+			font-size: 22pt;
+		}
+	}
 </style>

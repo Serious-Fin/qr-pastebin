@@ -50,13 +50,8 @@
 	}
 
 	@media (min-width: 768px) {
-		#agent {
-			font-size: 13pt;
-		}
-
-		.query_btn {
-			width: 60px;
-			height: 60px;
+		#main {
+			padding: 25px 50px;
 		}
 	}
 

@@ -2,15 +2,12 @@
 
 <p>There are a couple of reasons you might be seeing this:</p>
 <ul>
-	<li>- It may have expired</li>
-	<li>- The author may have deleted it</li>
+	<li>- Share may have expired</li>
+	<li>- The author may have deleted this share</li>
 	<li>- The link might be incorrect</li>
 </ul>
 
-<p>
-	If you were expecting this share, please double-check the URL or ask the person who sent it to you
-	for a fresh link.
-</p>
+<p>Please double-check the URL or ask the author to refresh share's expiration date.</p>
 
 <style>
 	h2 {
@@ -35,5 +32,22 @@
 
 	li {
 		margin-bottom: 5px;
+	}
+
+	@media (min-width: 768px) {
+		p {
+			margin-right: auto;
+			font-size: 13pt;
+		}
+
+		h2 {
+			margin-bottom: 40px;
+		}
+	}
+
+	@media (min-width: 1024px) {
+		h2 {
+			margin-bottom: 50px;
+		}
 	}
 </style>
