@@ -161,4 +161,29 @@
 		box-shadow: 1px 1px 1px 1px rgba(0, 0, 0, 0.199);
 		transform: translateY(2px);
 	}
+
+	@media (min-width: 768px) {
+		#main {
+			padding: 30px 50px;
+		}
+
+		#content {
+			margin-bottom: 30px;
+		}
+
+		#grid {
+			row-gap: 15px;
+			grid-template-columns: 170px auto;
+		}
+
+		input,
+		select {
+			padding: 5px 10px;
+			font-size: 11pt;
+		}
+
+		input[type='checkbox'] {
+			width: 25px;
+		}
+	}
 </style>
