@@ -181,4 +181,31 @@
 		color: rgb(65, 65, 65);
 		font-size: 12pt;
 	}
+
+	@media (min-width: 768px) {
+		#main {
+			padding: 30px 50px;
+		}
+
+		#grid {
+			row-gap: 20px;
+			grid-template-columns: 170px auto;
+		}
+
+		input,
+		select {
+			padding: 7px 10px;
+			font-size: 11pt;
+		}
+
+		input[type='checkbox'] {
+			width: 25px;
+		}
+	}
+
+	@media (min-width: 1024px) {
+		#main {
+			background-color: green;
+		}
+	}
 </style>

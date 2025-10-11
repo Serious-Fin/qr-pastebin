@@ -51,13 +51,13 @@
 
 	@media (min-width: 768px) {
 		#main {
-			padding: 25px 50px;
+			padding: 30px 50px;
 		}
 	}
 
 	@media (min-width: 1024px) {
-		h1 {
-			font-size: 22pt;
+		#main {
+			background-color: green;
 		}
 	}
 </style>

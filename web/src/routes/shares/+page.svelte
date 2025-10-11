@@ -80,7 +80,7 @@
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		width: 100%;
+		width: 90%;
 		background-color: var(--light);
 		margin-bottom: 40px;
 		box-shadow: 2px 2px 2px 2px rgba(0, 0, 0, 0.153);
@@ -163,5 +163,17 @@
 		font-size: 15pt;
 		font-weight: 500;
 		margin-bottom: 20px;
+	}
+
+	@media (min-width: 768px) {
+		#main {
+			padding: 30px 50px;
+		}
+	}
+
+	@media (min-width: 1024px) {
+		#main {
+			background-color: green;
+		}
 	}
 </style>
