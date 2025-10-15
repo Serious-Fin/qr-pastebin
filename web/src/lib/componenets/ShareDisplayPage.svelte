@@ -43,7 +43,7 @@
 			isLoadingTranslation = true;
 			try {
 				if (result.type === 'failure') {
-					throw Error(result.data?.message || 'Error deleting share, try again');
+					throw Error(result.data?.message || 'Error translating, try again');
 				} else if (result.type === 'success') {
 					await update();
 					content = result.data as any;
@@ -51,7 +51,7 @@
 			} catch (err) {
 				if (err instanceof Error) {
 					if (result?.status && result.status >= 500) {
-						logError('Server error', err);
+						logError(`Couldn't reach translation service`, err);
 					} else {
 						logError(err.message, err);
 					}

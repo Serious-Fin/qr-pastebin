@@ -10,6 +10,7 @@ import {
 	deleteShare
 } from '$lib/share';
 import { fail } from '@sveltejs/kit';
+import { GOOGLE_API_KEY } from '$env/static/private';
 
 export const load: PageServerLoad = async ({ params, locals }) => {
 	// Check the role of viewing user
@@ -84,8 +85,7 @@ export const actions = {
 		}
 	},
 	translate: async ({ fetch, request }) => {
-		const apiKey = 'AIzaSyACNpXY3CA03svkSkckurFAqXSvGN9gs4g';
-		const url = `https://translation.googleapis.com/language/translate/v2?key=${apiKey}`;
+		const url = `https://translation.googleapis.com/language/translate/v2?key=${GOOGLE_API_KEY}`;
 
 		const data = await request.formData();
 		const text = data.get('content') as string;
@@ -98,7 +98,6 @@ export const actions = {
 					'Content-Type': 'application/json'
 				},
 				body: JSON.stringify({
-					key: apiKey,
 					q: text,
 					target: language,
 					format: 'text'

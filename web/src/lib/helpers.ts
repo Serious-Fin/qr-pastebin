@@ -3,7 +3,7 @@ import { toast } from 'svelte-sonner';
 export function logError(msgToUser: string, err: Error) {
 	toast.error(msgToUser);
 
-	console.error(err);
+	console.error(JSON.stringify(err));
 }
 
 export function logSuccess(msg: string) {
