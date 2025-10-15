@@ -11,6 +11,8 @@
 	let { share, isAdmin }: { share: Share; isAdmin: boolean } = $props();
 	let svg: string = $state('');
 	let isLoading = $state(false);
+	let isLoadingTranslation = $state(false);
+	let content = $state(share.content);
 
 	const handleDeleteSubmissionError: SubmitFunction = () => {
 		return async ({ update, result }) => {
@@ -36,6 +38,30 @@
 		};
 	};
 
+	const handleTranslate: SubmitFunction = () => {
+		return async ({ update, result }) => {
+			isLoadingTranslation = true;
+			try {
+				if (result.type === 'failure') {
+					throw Error(result.data?.message || 'Error deleting share, try again');
+				} else if (result.type === 'success') {
+					await update();
+					content = result.data as any;
+				}
+			} catch (err) {
+				if (err instanceof Error) {
+					if (result?.status && result.status >= 500) {
+						logError('Server error', err);
+					} else {
+						logError(err.message, err);
+					}
+				}
+			} finally {
+				isLoadingTranslation = false;
+			}
+		};
+	};
+
 	onMount(async () => {
 		svg = await QRCode.toString(page.url.href, {
 			type: 'svg',
@@ -49,7 +75,30 @@
 {#if share.title !== undefined && share.title !== ''}
 	<h2>{share.title}</h2>
 {/if}
-<textarea id="content" name="content" readonly>{share.content}</textarea>
+
+<form method="POST" action="?/translate" use:enhance={handleTranslate} id="translationForm">
+	<label for="language">Translate to:</label>
+	<select class="property-input" name="language" id="language">
+		<option value="en" selected>English</option>
+		<option value="lt">Lithuanian</option>
+		<option value="es">Spanish</option>
+		<option value="fr">French</option>
+		<option value="de">German</option>
+		<option value="zh">Chinese</option>
+		<option value="ar">Arabic</option>
+		<option value="pt">Portuguese</option>
+	</select>
+	<input type="hidden" name="content" bind:value={content} />
+	{#if isLoadingTranslation}
+		<div id="translationLoading">
+			<LoadingSpinner />
+		</div>
+	{:else}
+		<input type="submit" value="Translate" class="translationBtn" />
+	{/if}
+</form>
+
+<textarea id="content" name="content" bind:value={content} readonly></textarea>
 <div id="share-info">
 	{#if share.authorName}
 		<p>Created by: {share.authorName}</p>
@@ -91,13 +140,33 @@
 
 	#content {
 		width: 100%;
-		max-width: 100%; /* so text box couldn't expand out of view */
+		max-width: 100%;
 		min-height: 150px;
 		height: fit-content;
 		margin: 15px 0;
 		padding: 7px 8px;
 		border-radius: 5px;
 		font-size: 12pt;
+	}
+
+	.translationBtn {
+		padding: 5px 10px;
+		background-color: var(--accent);
+		font-size: 12pt;
+		border: none;
+		border-radius: 10px;
+		box-shadow: 2px 2px 2px 2px rgba(0, 0, 0, 0.2);
+	}
+
+	#translationForm {
+		display: flex;
+		gap: 10px;
+		align-items: center;
+	}
+
+	#translationForm select {
+		padding: 5px 10px;
+		font-size: 11pt;
 	}
 
 	#loadingBox {
@@ -139,5 +208,12 @@
 	.button:active {
 		box-shadow: 1px 1px 1px 1px rgba(0, 0, 0, 0.2);
 		transform: translateY(2px);
+	}
+
+	@media (min-width: 768px) {
+		#translationForm {
+			gap: 15px;
+			margin-right: auto;
+		}
 	}
 </style>

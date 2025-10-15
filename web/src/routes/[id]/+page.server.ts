@@ -82,5 +82,36 @@ export const actions = {
 			}
 			return fail(500, { message: 'Unexpected server error' });
 		}
+	},
+	translate: async ({ fetch, request }) => {
+		const apiKey = 'AIzaSyACNpXY3CA03svkSkckurFAqXSvGN9gs4g';
+		const url = `https://translation.googleapis.com/language/translate/v2?key=${apiKey}`;
+
+		const data = await request.formData();
+		const text = data.get('content') as string;
+		const language = data.get('language') as string;
+
+		try {
+			const response = await fetch(url, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({
+					key: apiKey,
+					q: text,
+					target: language,
+					format: 'text'
+				})
+			});
+			if (!response.ok) {
+				const errorMsg = await response.json().catch(() => response.statusText);
+				return fail(500, { message: errorMsg });
+			}
+			const parsedResponse = await response.json();
+			return parsedResponse['data']['translations'][0]['translatedText'];
+		} catch (err) {
+			return fail(500, { message: JSON.stringify(err) });
+		}
 	}
 };
