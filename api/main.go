@@ -191,7 +191,15 @@ func main() {
 	router.POST("/user", CreateUser)
 	router.GET("/user/session/:sessionId", GetUser)
 	router.POST("/user/session", CreateSession)
+	router.GET("/health", HealthCheck)
 	router.Run("0.0.0.0:8080")
+}
+
+func HealthCheck(c *gin.Context) {
+	response := common.HealthResponse{
+		Status: "healthy",
+	}
+	c.IndentedJSON(http.StatusOK, response)
 }
 
 func CreateShare(c *gin.Context) {
