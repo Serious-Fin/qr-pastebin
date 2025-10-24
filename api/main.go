@@ -394,9 +394,3 @@ func CreateSession(c *gin.Context) {
 	}
 	c.IndentedJSON(http.StatusOK, response)
 }
-
-// TODO: add tablet styling
-// TODO: add desktop styling
-
-// TODO: host via docker
-// TODO: setup HTTPS
