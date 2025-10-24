@@ -16,8 +16,8 @@
 
 - [x] Deploy SvelteKit frontend to Cloudflare
 - [x] Create a dockerfile for Go backend
-- [ ] Create Docker Compose for two backend instances
-- [ ] Add Nginx to docker compose
+- [x] Create Docker Compose for two backend instances
+- [x] Add Nginx to docker compose
 - [ ] Host on DigitalOcean the docker compose file
 - [ ] Point cloudflare's api IP to backend VM (DigitalOcean)
 - [ ] Configure frontend and backend communication, env variables
@@ -39,6 +39,7 @@ To launch, go into `qr-pastebin/api` and run:
 
 ```bash
 docker compose up -d
+docker compose up -d --build --scale api=2 (to launch two api instances)
 ```
 
 To stop, run:

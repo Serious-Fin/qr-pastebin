@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
+	"os/exec"
+	"strings"
 
 	"github.com/jackc/pgx/v5"
 	"golang.org/x/crypto/bcrypt"
@@ -33,7 +35,23 @@ type User struct {
 }
 
 type HealthResponse struct {
-	Status string `json:"status"`
+	Status   string `json:"status"`
+	Hostname string `json:"hostname"`
+}
+
+func GetHostname() string {
+	// Execute the 'hostname' command
+	cmd := exec.Command("hostname")
+
+	// Capture the output
+	output, err := cmd.Output()
+	if err != nil {
+		// If the command fails, return a safe default or error message
+		return "error_retrieving_hostname"
+	}
+
+	// Convert output to string and trim any newline characters
+	return strings.TrimSpace(string(output))
 }
 
 func CreatePasswordHash(password string) (string, error) {

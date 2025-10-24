@@ -196,8 +196,10 @@ func main() {
 }
 
 func HealthCheck(c *gin.Context) {
+	containerHostname := common.GetHostname()
 	response := common.HealthResponse{
-		Status: "healthy",
+		Status:   "healthy",
+		Hostname: containerHostname,
 	}
 	c.IndentedJSON(http.StatusOK, response)
 }
