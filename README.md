@@ -18,7 +18,7 @@
 - [x] Create a dockerfile for Go backend
 - [x] Create Docker Compose for two backend instances
 - [x] Add Nginx to docker compose
-- [ ] Host on DigitalOcean the docker compose file
+- [x] Host on DigitalOcean the docker compose file
 - [ ] Point cloudflare's api IP to backend VM (DigitalOcean)
 - [ ] Configure frontend and backend communication, env variables
 
