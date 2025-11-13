@@ -1,3 +1,5 @@
+import { PUBLIC_API_ADDRESS } from '$env/static/public';
+
 export interface UserCredentials {
 	name: string;
 	password: string;
@@ -26,7 +28,7 @@ export class WrongNameOrPassError extends Error {
 
 export async function createNewUser(user: UserCredentials) {
 	try {
-		const response = await fetch(`http://localhost:8080/user`, {
+		const response = await fetch(`${PUBLIC_API_ADDRESS}/user`, {
 			body: JSON.stringify(user),
 			headers: {
 				'Content-Type': 'application/json'
@@ -55,7 +57,7 @@ export async function createNewUser(user: UserCredentials) {
 
 export async function tryCreateSessionForUser(user: UserCredentials): Promise<string> {
 	try {
-		const response = await fetch(`http://localhost:8080/user/session`, {
+		const response = await fetch(`${PUBLIC_API_ADDRESS}/user/session`, {
 			body: JSON.stringify(user),
 			headers: {
 				'Content-Type': 'application/json'
@@ -86,7 +88,7 @@ export async function tryCreateSessionForUser(user: UserCredentials): Promise<st
 
 export async function tryGetSessionForUser(sessionId: string): Promise<User> {
 	try {
-		const response = await fetch(`http://localhost:8080/user/session/${sessionId}`);
+		const response = await fetch(`${PUBLIC_API_ADDRESS}/user/session/${sessionId}`);
 		if (!response.ok) {
 			const errorBody = await response.json().catch(() => ({ message: response.statusText }));
 			throw new Error(

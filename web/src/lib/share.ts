@@ -1,3 +1,5 @@
+import { PUBLIC_API_ADDRESS } from '$env/static/public';
+
 export interface ShareRequest {
 	title: string;
 	content: string;
@@ -42,7 +44,7 @@ export class WrongPasswordError extends Error {
 
 export async function createShare(request: ShareRequest): Promise<string> {
 	try {
-		const response = await fetch(`http://localhost:8080/share`, {
+		const response = await fetch(`${PUBLIC_API_ADDRESS}/share`, {
 			body: JSON.stringify(request),
 			headers: {
 				'Content-Type': 'application/json'
@@ -67,7 +69,7 @@ export async function createShare(request: ShareRequest): Promise<string> {
 
 export async function getShare(id: string): Promise<Share> {
 	try {
-		const response = await fetch(`http://localhost:8080/share/${id}`);
+		const response = await fetch(`${PUBLIC_API_ADDRESS}/share/${id}`);
 		if (!response.ok) {
 			const errorBody = await response.json().catch(() => ({ message: response.statusText }));
 			throw new Error(
@@ -85,7 +87,7 @@ export async function getShare(id: string): Promise<Share> {
 
 export async function getShareForEdit(id: string, sessionId: string): Promise<Share> {
 	try {
-		const response = await fetch(`http://localhost:8080/share/${id}/edit`, {
+		const response = await fetch(`${PUBLIC_API_ADDRESS}/share/${id}/edit`, {
 			headers: {
 				Authorization: `Bearer ${sessionId}`
 			}
@@ -107,7 +109,7 @@ export async function getShareForEdit(id: string, sessionId: string): Promise<Sh
 
 export async function isSharePasswordProtected(id: string): Promise<boolean> {
 	try {
-		const response = await fetch(`http://localhost:8080/share/${id}/protected`);
+		const response = await fetch(`${PUBLIC_API_ADDRESS}/share/${id}/protected`);
 		if (!response.ok) {
 			const errorBody = await response.json().catch(() => ({ message: response.statusText }));
 			throw new Error(
@@ -131,7 +133,7 @@ export async function getPasswordProtectedShare(
 	body: GetPasswordProtectedShareRequest
 ): Promise<Share> {
 	try {
-		const response = await fetch(`http://localhost:8080/share/${id}/protected`, {
+		const response = await fetch(`${PUBLIC_API_ADDRESS}/share/${id}/protected`, {
 			body: JSON.stringify(body),
 			headers: {
 				'Content-Type': 'application/json'
@@ -161,7 +163,7 @@ export async function getPasswordProtectedShare(
 
 export async function getSharesForUser(sessionId: string): Promise<Share[]> {
 	try {
-		const response = await fetch(`http://localhost:8080/shares`, {
+		const response = await fetch(`${PUBLIC_API_ADDRESS}/shares`, {
 			headers: {
 				Authorization: `Bearer ${sessionId}`
 			}
@@ -183,7 +185,7 @@ export async function getSharesForUser(sessionId: string): Promise<Share[]> {
 
 export async function deleteShare(shareId: string, sessionId: string): Promise<void> {
 	try {
-		const response = await fetch(`http://localhost:8080/share/${shareId}`, {
+		const response = await fetch(`${PUBLIC_API_ADDRESS}/share/${shareId}`, {
 			headers: {
 				Authorization: `Bearer ${sessionId}`
 			},
@@ -209,7 +211,7 @@ export async function editShare(
 	shareId: string
 ): Promise<void> {
 	try {
-		const response = await fetch(`http://localhost:8080/share/${shareId}/edit`, {
+		const response = await fetch(`${PUBLIC_API_ADDRESS}/share/${shareId}/edit`, {
 			body: JSON.stringify(request),
 			headers: {
 				'Content-Type': 'application/json',
