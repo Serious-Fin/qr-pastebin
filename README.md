@@ -4,31 +4,28 @@
 
 - Authentication (Implemented - user logging in)
 - Authorization (Implemented - only owners see their shares and only admins can delete shares)
-- Load balancing (TODO: NGINX)
-- DDoS prevention (TODO: Cloudflare)
-- HTTPS (TODO: Cloudflare)
+- Load balancing (Implemented - NGINX)
+- HTTPS (Implemented - local certificates)
 - Secure password input (Implemented - password input is hidden)
 - Secure password storing (Implemented - passwords are being hashed in DB)
 - Roles (Implemented - admins can delete any share)
 - Access control (Implemented - users can access some shares using only password)
 
-## Plan
+## Setup
 
-- [x] Deploy SvelteKit frontend to Cloudflare
-- [x] Create a dockerfile for Go backend
-- [x] Create Docker Compose for two backend instances
-- [x] Add Nginx to docker compose
-- [x] Host on DigitalOcean the docker compose file
-- [ ] Point cloudflare's api IP to backend VM (DigitalOcean)
-- [ ] Configure frontend and backend communication, env variables
+Before running the project set up certificates for HTTPS in localhost. Example for mac:
 
-## Frontend
+```bash
+brew install mkcert
+mkcert -install
+mkcert localhost 127.0.0.1 ::1
+```
 
-SvelteKit web application is hosted on CloudFlare and can be reached via [qr-pastebin.pages.dev](https://qr-pastebin.pages.dev/).
-
-After pushing new changes, CloudFlare automatically redeploys the app.
+Copy the certificates to folders `web/certs/` and `api/certs/`
 
 ## Backend
+
+Run the whole project by running `production.sh` script
 
 The backend consists of a single docker container inside which the following services run:
 
