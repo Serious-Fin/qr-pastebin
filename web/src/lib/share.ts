@@ -44,15 +44,6 @@ export class WrongPasswordError extends Error {
 
 export async function createShare(request: ShareRequest): Promise<string> {
 	try {
-		console.log(`Making request to ${PUBLIC_API_ADDRESS}/share`);
-		console.log(`Trying health:`);
-		const resp = await fetch(`${PUBLIC_API_ADDRESS}/health`);
-		if (!resp.ok) {
-			console.error('Health failed :(');
-			console.error('Status' + resp.status);
-		} else {
-			console.log('health success!');
-		}
 		const response = await fetch(`${PUBLIC_API_ADDRESS}/share`, {
 			body: JSON.stringify(request),
 			headers: {
