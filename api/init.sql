@@ -3,6 +3,7 @@ CREATE TABLE public.users (
 	"name" text NOT NULL,
 	passwordhash text NOT NULL,
 	"role" int DEFAULT 0 NOT NULL,
+	"isoauth" bool DEFAULT false NOT NULL,
 	CONSTRAINT users_pk PRIMARY KEY (id)
 );
 
