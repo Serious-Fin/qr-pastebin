@@ -50,3 +50,30 @@ To also remove the persistent database data (for example, after updating the sch
 ```bash
 docker compose down -v
 ```
+
+## Exec'ing into DB from docker
+
+Connect:
+```bash
+psql -U postgres -d qr_pastebin
+```
+
+List databases:
+```bash
+\t
+```
+
+List tables:
+```bash
+\dt
+```
+
+Table info:
+```bash
+\d users
+```
+
+Quit:
+```bash
+\q
+```
