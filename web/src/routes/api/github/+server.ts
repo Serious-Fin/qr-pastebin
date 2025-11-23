@@ -30,7 +30,7 @@ export const GET: RequestHandler = async ({ url, cookies }) => {
 			const userExists = await checkIfGithubUserExists(user.id);
 			console.log(`userExists: ${userExists}`);
 			if (!userExists) {
-				createNewUser({
+				await createNewUser({
 					id: user.id,
 					name: user.name,
 					password: '',
