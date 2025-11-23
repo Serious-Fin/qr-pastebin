@@ -3,6 +3,8 @@ import { PUBLIC_API_ADDRESS } from '$env/static/public';
 export interface UserCredentials {
 	name: string;
 	password: string;
+	isOauth?: boolean;
+	id?: number;
 }
 
 export interface User {
@@ -23,6 +25,32 @@ export class WrongNameOrPassError extends Error {
 		super('Wrong name or password');
 		this.name = 'WrongNameOrPassError';
 		Object.setPrototypeOf(this, WrongNameOrPassError.prototype);
+	}
+}
+export class UserUsingOauthError extends Error {
+	constructor() {
+		super('User is using OAuth to log in');
+		this.name = 'UserUsingOauthError';
+		Object.setPrototypeOf(this, UserUsingOauthError.prototype);
+	}
+}
+
+export async function checkIfGithubUserExists(userId: number): Promise<boolean> {
+	try {
+		const response = await fetch(`${PUBLIC_API_ADDRESS}/oauth/github/${userId}`);
+		if (!response.ok) {
+			const errorBody = await response.json().catch(() => ({ message: response.statusText }));
+			throw new Error(
+				`Error getting share ${response.status} - ${errorBody.message || 'Unknown error'}`
+			);
+		}
+		const { exists }: { exists: boolean } = await response.json();
+		return exists;
+	} catch (err) {
+		if (err instanceof Error) {
+			throw Error(`Could not call get share endpoint: ${JSON.stringify(err.message)}`);
+		}
+		throw new Error(`Unknown error while getting share: ${JSON.stringify(err)}`);
 	}
 }
 
@@ -67,6 +95,9 @@ export async function tryCreateSessionForUser(user: UserCredentials): Promise<st
 		if (response.status === 401) {
 			throw new WrongNameOrPassError();
 		}
+		if (response.status === 406) {
+			throw new UserUsingOauthError();
+		}
 		if (!response.ok) {
 			const errorBody = await response.json().catch(() => ({ message: response.statusText }));
 			throw new Error(
@@ -76,7 +107,7 @@ export async function tryCreateSessionForUser(user: UserCredentials): Promise<st
 		const parsedResponse: { sessionId: string } = await response.json();
 		return parsedResponse.sessionId;
 	} catch (err) {
-		if (err instanceof WrongNameOrPassError) {
+		if (err instanceof WrongNameOrPassError || err instanceof UserUsingOauthError) {
 			throw err;
 		}
 		if (err instanceof Error) {

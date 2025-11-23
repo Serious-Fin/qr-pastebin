@@ -12,6 +12,8 @@ import (
 type UserCredentials struct {
 	Name     string `json:"name"`
 	Password string `json:"password"`
+	Id       *int   `json:"id,omitempty"`
+	IsOauth  *bool  `json:"isOauth,omitempty"`
 }
 
 type SessionData struct {
@@ -36,9 +38,23 @@ func (handler *UserDBHandler) CreateUser(request UserCredentials) error {
 	if err != nil {
 		return err
 	}
-	query := "INSERT INTO users (id, name, passwordHash, role) VALUES ($1, $2, $3, $4);"
+	query := "INSERT INTO users (id, name, passwordHash, role, isoauth) VALUES ($1, $2, $3, $4, $5);"
 
-	_, err = handler.DB.Exec(context.Background(), query, rand.Intn(10000), request.Name, hashedPassword, 0)
+	var id int
+	if request.Id != nil {
+		id = *request.Id
+	} else {
+		id = rand.Intn(10000)
+	}
+
+	var isOauth bool
+	if request.IsOauth != nil {
+		isOauth = *request.IsOauth
+	} else {
+		isOauth = false
+	}
+
+	_, err = handler.DB.Exec(context.Background(), query, id, request.Name, hashedPassword, 0, isOauth)
 	if err != nil {
 		return err
 	}
@@ -46,14 +62,41 @@ func (handler *UserDBHandler) CreateUser(request UserCredentials) error {
 }
 
 func (handler *UserDBHandler) CreateSession(request UserCredentials) (*SessionData, error) {
-	user, err := common.GetUserByName(handler.DB, request.Name)
-	if err != nil {
-		return nil, &common.PasswordIncorrectError{}
-	}
+	var user *common.User
+	var err error
+	if request.IsOauth != nil && request.Id != nil {
+		// Logging in via OAuth
+		user, err = common.GetUserById(handler.DB, *request.Id)
+		if err != nil {
+			return nil, &common.PasswordIncorrectError{}
+		}
 
-	passwordOk := common.IsPasswordCorrect(user.PasswordHash, request.Password)
-	if !passwordOk {
-		return nil, &common.PasswordIncorrectError{}
+		isOauthUser, err := handler.UserLoggedInViaOauth(user.Name)
+		if err != nil {
+			return nil, err
+		}
+		if !isOauthUser {
+			return nil, &common.PasswordIncorrectError{}
+		}
+	} else {
+		// Logging in via normal login screen
+		user, err = common.GetUserByName(handler.DB, request.Name)
+		if err != nil {
+			return nil, &common.PasswordIncorrectError{}
+		}
+
+		isOauthUser, err := handler.UserLoggedInViaOauth(user.Name)
+		if err != nil {
+			return nil, err
+		}
+		if isOauthUser {
+			return nil, &common.UserLoggedInViaOauth{}
+		}
+
+		passwordOk := common.IsPasswordCorrect(user.PasswordHash, request.Password)
+		if !passwordOk {
+			return nil, &common.PasswordIncorrectError{}
+		}
 	}
 
 	// Try get active session for this user
@@ -115,4 +158,31 @@ func (handler *UserDBHandler) createNewSession(userId int) (string, error) {
 		return "", err
 	}
 	return sessionId, nil
+}
+
+func (handler *UserDBHandler) GithubUserExists(userId int) (bool, error) {
+	query := "SELECT users.id FROM users WHERE id = $1 AND isOauth = true;"
+	var user struct {
+		Id int
+	}
+	err := handler.DB.QueryRow(context.Background(), query, userId).Scan(&user.Id)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return false, nil
+		}
+		return false, err
+	}
+	return true, nil
+}
+
+func (handler *UserDBHandler) UserLoggedInViaOauth(username string) (bool, error) {
+	query := "SELECT users.isoauth FROM users WHERE name = $1;"
+	var user struct {
+		IsOauth bool
+	}
+	err := handler.DB.QueryRow(context.Background(), query, username).Scan(&user.IsOauth)
+	if err != nil {
+		return false, err
+	}
+	return user.IsOauth, nil
 }

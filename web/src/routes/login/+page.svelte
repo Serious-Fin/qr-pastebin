@@ -36,6 +36,10 @@
 			}
 		};
 	};
+
+	const loginViaGithub = () => {
+		window.location.href = '/api/github';
+	};
 </script>
 
 <section id="main">
@@ -59,6 +63,10 @@
 
 			<input type="hidden" id="redirectTo" name="redirectTo" bind:value={redirectTo} />
 		</form>
+
+		<button class="github_login" onclick={loginViaGithub}>
+			<img src="/github-mark.svg" alt="github logo" />Sign in with GitHub
+		</button>
 	{:else}
 		<p id="already-have-acc">Already logged in as {data.username}</p>{/if}
 </section>
@@ -134,6 +142,32 @@
 
 	#loadingBox {
 		margin-top: 20px;
+	}
+
+	.github_login {
+		background-color: white;
+		padding: 10px 14px;
+		margin-top: 40px;
+		border-radius: 4px;
+		border: 0.6px solid rgb(218, 220, 224);
+		font-size: 16px;
+		letter-spacing: 0.25px;
+		font-family: 'Google Sans', arial, sans-serif;
+		font-weight: 500;
+		color: #3c4043f2;
+
+		display: flex;
+		align-items: center;
+		gap: 10px;
+	}
+
+	.github_login img {
+		width: 18px;
+	}
+
+	.github_login:active {
+		background-color: rgb(236, 243, 254);
+		border: 2px solid rgb(0, 99, 155);
 	}
 
 	@media (min-width: 768px) {

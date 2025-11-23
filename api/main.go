@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 
 	"qr-pastebin-api/common"
@@ -82,6 +83,7 @@ var wrongPasswordErr *common.PasswordIncorrectError
 var userAlreadyExistsErr *users.UserAlreadyExistsError
 var expiredShareError *shares.ExpiredShareError
 var notFoundError *common.NotFoundError
+var oauthUser *common.UserLoggedInViaOauth
 
 func ErrorHandlerMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -111,6 +113,11 @@ func ErrorHandlerMiddleware() gin.HandlerFunc {
 			if errors.As(err, &notFoundError) {
 				statusCode = http.StatusNotFound
 				message = notFoundError.Error()
+			}
+
+			if errors.As(err, &oauthUser) {
+				statusCode = http.StatusNotAcceptable
+				message = oauthUser.Error()
 			}
 
 			if errors.Is(err, sql.ErrNoRows) {
@@ -190,6 +197,7 @@ func main() {
 	router.GET("/share/:id/protected", IsPasswordProtected)
 	router.POST("/user", CreateUser)
 	router.GET("/user/session/:sessionId", GetUser)
+	router.GET("/oauth/github/:userId", GithubUserExists)
 	router.POST("/user/session", CreateSession)
 	router.GET("/health", HealthCheck)
 	router.Run("0.0.0.0:8080")
@@ -227,6 +235,25 @@ func GetShare(c *gin.Context) {
 		return
 	}
 	c.IndentedJSON(http.StatusOK, response)
+}
+
+func GithubUserExists(c *gin.Context) {
+	userIdString := c.Param("userId")
+	userId64, _ := strconv.ParseInt(userIdString, 10, 0)
+	userId := int(userId64)
+	response, err := userHandler.GithubUserExists(userId)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	type existsResponse struct {
+		Exists bool `json:"exists"`
+	}
+
+	c.IndentedJSON(http.StatusOK, existsResponse{
+		Exists: response,
+	})
 }
 
 func GetShareForEdit(c *gin.Context) {

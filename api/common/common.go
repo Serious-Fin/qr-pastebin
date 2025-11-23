@@ -32,6 +32,7 @@ type User struct {
 	Name         string `json:"name"`
 	PasswordHash string `json:"password"`
 	Role         Role   `json:"role"`
+	IsOauth      bool   `json:"isoauth"`
 }
 
 type HealthResponse struct {
@@ -69,7 +70,7 @@ func IsPasswordCorrect(passwordHash, password string) bool {
 
 func GetUserByName(db *pgx.Conn, name string) (*User, error) {
 	var user User
-	err := db.QueryRow(context.Background(), "SELECT id, name, passwordHash, role FROM users WHERE name = $1;", name).Scan(&user.Id, &user.Name, &user.PasswordHash, &user.Role)
+	err := db.QueryRow(context.Background(), "SELECT id, name, passwordHash, role, isoauth FROM users WHERE name = $1;", name).Scan(&user.Id, &user.Name, &user.PasswordHash, &user.Role, &user.IsOauth)
 	if err != nil {
 		return nil, fmt.Errorf("error getting user with name '%s': %w", name, err)
 	}
@@ -78,7 +79,7 @@ func GetUserByName(db *pgx.Conn, name string) (*User, error) {
 
 func GetUserById(db *pgx.Conn, id int) (*User, error) {
 	var user User
-	err := db.QueryRow(context.Background(), "SELECT id, name, passwordHash, role FROM users WHERE id = $1;", id).Scan(&user.Id, &user.Name, &user.PasswordHash, &user.Role)
+	err := db.QueryRow(context.Background(), "SELECT id, name, passwordHash, role, isoauth FROM users WHERE id = $1;", id).Scan(&user.Id, &user.Name, &user.PasswordHash, &user.Role, &user.IsOauth)
 	if err != nil {
 		return nil, fmt.Errorf("error getting user with id '%d': %w", id, err)
 	}
