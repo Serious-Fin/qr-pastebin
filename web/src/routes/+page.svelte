@@ -2,12 +2,19 @@
 	import type { PageProps } from './$types';
 	import { enhance } from '$app/forms';
 	import type { SubmitFunction } from '@sveltejs/kit';
-	import { logError, logSuccess } from '$lib/helpers';
+	import { logError, logSuccess, fetchQuote } from '$lib/helpers';
 	import LoadingSpinner from '$lib/componenets/LoadingSpinner.svelte';
+	import { onMount } from 'svelte';
+
 	let { data }: PageProps = $props();
 	let userId = $state(data.userId);
 	let setPassword = $state(false);
 	let isLoading = $state(false);
+
+	let placeholderQuote = $state('');
+	onMount(async () => {
+		placeholderQuote = await fetchQuote();
+	});
 
 	const handleShareCreation: SubmitFunction = () => {
 		isLoading = true;
@@ -38,7 +45,7 @@
 	<h1>Shareit</h1>
 	<h2>New share</h2>
 	<form method="POST" action="?/createShare" use:enhance={handleShareCreation}>
-		<textarea id="content" name="content" required></textarea>
+		<textarea id="content" name="content" required>{placeholderQuote}</textarea>
 
 		<div id="grid">
 			<label for="title">Title:</label>

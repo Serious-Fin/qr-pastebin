@@ -16,3 +16,22 @@ export function truncateString(text: string, maxLength: number): string {
 	}
 	return text.substring(0, maxLength) + '...';
 }
+
+interface Quote {
+	fact: string;
+	length: number;
+}
+
+export async function fetchQuote(): Promise<string> {
+	try {
+		const response = await fetch('https://catfact.ninja/fact');
+		if (!response.ok) {
+			return "Services don't always work as expected NOT OK";
+		}
+		const parsedResponse: Quote = await response.json();
+		return parsedResponse.fact;
+	} catch (err) {
+		console.error(err);
+		return "Services don't always work as expected ERROR";
+	}
+}
